@@ -1,6 +1,6 @@
 # MVP Radar
 
-Análisis de la carrera al MVP 2026 de las Grandes Ligas, de los últimos 10 premios (2016 a 2025) y de los casos en que el ganador no fue quien tuvo más WAR. Primer proyecto de un laboratorio de béisbol que va a seguir creciendo (el Cy Young es el siguiente).
+Análisis de la carrera al MVP 2026 de las Grandes Ligas, de los últimos 10 premios (2016 a 2025) y de los casos en que el ganador no fue quien tuvo más WAR. Primer proyecto de un laboratorio de béisbol que va a seguir creciendo.
 
 La web está en español y usa gráficos al estilo de Baseball Savant: barras de percentiles, spray charts, velocidad de salida contra ángulo, mapas de zona, bat tracking, arsenal de lanzadores y un laboratorio para armar tu propia boleta.
 

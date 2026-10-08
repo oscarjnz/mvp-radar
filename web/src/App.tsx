@@ -8,6 +8,8 @@ import History from './pages/History'
 import Voters from './pages/Voters'
 import Snubs from './pages/Snubs'
 import Method from './pages/Method'
+import Glossary from './pages/Glossary'
+import { GlossaryProvider } from './components/Term'
 
 const TITLES: Record<string, string> = {
   '/': 'MVP Radar',
@@ -16,6 +18,7 @@ const TITLES: Record<string, string> = {
   '/que-premian': 'Qué premian los votantes · MVP Radar',
   '/injusticias': 'Debió ser MVP · MVP Radar',
   '/metodologia': 'Metodología · MVP Radar',
+  '/glosario': 'Glosario · MVP Radar',
 }
 
 function RouteEffects() {
@@ -41,6 +44,7 @@ function Header() {
           <NavLink to="/historial">Historial</NavLink>
           <NavLink to="/que-premian">Qué premian</NavLink>
           <NavLink to="/injusticias">Debió ser MVP</NavLink>
+          <NavLink to="/glosario">Glosario</NavLink>
           <NavLink to="/metodologia">Metodología</NavLink>
         </nav>
         <button className="theme-btn" onClick={toggle} aria-label={mode === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'} title="Cambiar tema">{mode === 'dark' ? '☀' : '☾'}</button>
@@ -53,6 +57,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        <GlossaryProvider>
         <RouteEffects />
         <Header />
         <main>
@@ -64,15 +69,21 @@ export default function App() {
             <Route path="/que-premian" element={<Voters />} />
             <Route path="/injusticias" element={<Snubs />} />
             <Route path="/metodologia" element={<Method />} />
+            <Route path="/glosario" element={<Glossary />} />
             <Route path="*" element={<div className="wrap"><h1>Página no encontrada</h1><p><NavLink to="/">Volver al inicio</NavLink></p></div>} />
           </Routes>
         </main>
         <footer className="footer">
           <div className="wrap">
-            <p>MVP Radar es un proyecto independiente de análisis de béisbol. Datos de MLB Stats API, Baseball Savant, Baseball Reference y FanGraphs. No afiliado a MLB.</p>
-            <p>Primer análisis de un laboratorio que seguirá creciendo: el Cy Young es el siguiente.</p>
+            <p className="credit">
+              MVP Radar fue desarrollado por <a href="https://osnarci.online" target="_blank" rel="noreferrer">Oscar Jiménez</a>. Conoce más de mi trabajo en <a href="https://osnarci.online" target="_blank" rel="noreferrer">osnarci.online</a>.
+            </p>
+            <p>
+              Este es un proyecto independiente de análisis de béisbol y no tiene ninguna relación con MLB, Baseball Savant, Baseball Reference ni FanGraphs. Esos sitios son herramientas y fuentes de datos clave para este trabajo, pero no avalan ni patrocinan este análisis. Los nombres, las fotos y los logos pertenecen a sus dueños.
+            </p>
           </div>
         </footer>
+        </GlossaryProvider>
       </BrowserRouter>
     </ThemeProvider>
   )

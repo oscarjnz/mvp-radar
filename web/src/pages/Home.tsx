@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useCandidates, useHistory } from '../lib/data'
 import { leagueName } from '../lib/format'
 import { Loading, PlayerCard, Section } from '../components/ui'
+import { P, L } from '../components/Term'
 
 export default function Home() {
   const c = useCandidates()
@@ -11,7 +12,7 @@ export default function Home() {
       <header className="hero">
         <div className="eyebrow">Laboratorio de béisbol · Temporada 2026</div>
         <h1>¿Quién debería ser <span>MVP</span>?</h1>
-        <p className="lede">Los candidatos de 2026 en las dos ligas, qué premiaron los votantes en los últimos 10 años y a quién le quitaron el premio. Con datos de Baseball Reference, FanGraphs, Baseball Savant y MLB.com, y los gráficos al estilo Savant.</p>
+        <P className="lede">Los candidatos de 2026 en las dos ligas, qué premiaron los votantes en los últimos 10 años y a quién le quitaron el premio. Con datos de Baseball Reference, FanGraphs, Baseball Savant y MLB.com, y los gráficos al estilo Savant.</P>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 18 }}>
           <Link className="btn" style={{ background: 'var(--accent)', color: '#fff', borderColor: 'transparent' }} to="/carrera">Ver la carrera 2026</Link>
           <Link className="btn" to="/historial">Los últimos 10 MVP</Link>
@@ -19,10 +20,10 @@ export default function Home() {
         </div>
         {h.data ? (
           <div className="stat-tiles">
-            <div className="tile"><div className="v">{h.data.summary.hitters + h.data.summary.twoWay}/20</div><div className="l">MVP recientes fueron bateadores o de dos vías</div></div>
-            <div className="tile"><div className="v">0</div><div className="l">lanzadores puros ganaron el premio en 10 años</div></div>
-            <div className="tile"><div className="v">{h.data.summary.unanimous}</div><div className="l">votaciones unánimes, todas desde 2021</div></div>
-            <div className="tile"><div className="v">{h.data.summary.playoffsPct}%</div><div className="l">de los MVP jugaron en equipos de playoffs</div></div>
+            <div className="tile"><div className="v">{h.data.summary.hitters + h.data.summary.twoWay}/20</div><L>MVP recientes fueron bateadores o de dos vías</L></div>
+            <div className="tile"><div className="v">0</div><L>lanzadores puros ganaron el premio en 10 años</L></div>
+            <div className="tile"><div className="v">{h.data.summary.unanimous}</div><L>votaciones unánimes, todas desde 2021</L></div>
+            <div className="tile"><div className="v">{h.data.summary.playoffsPct}%</div><L>de los MVP jugaron en equipos de playoffs</L></div>
           </div>
         ) : null}
       </header>
@@ -36,7 +37,7 @@ export default function Home() {
                 <div className="grid">
                   {c.data!.leagues[lg].top5.slice(0, 3).map((p) => <PlayerCard key={p.id} c={p} />)}
                 </div>
-                <p style={{ marginTop: 10 }}><Link to={`/carrera?liga=${lg}`}>Ver el top 5 completo →</Link></p>
+                <P style={{ marginTop: 10 }}><Link to={`/carrera?liga=${lg}`}>Ver el top 5 completo →</Link></P>
               </div>
             ))}
           </div>
@@ -49,8 +50,8 @@ export default function Home() {
           <Link to="/historial" className="card" style={{ color: 'inherit' }}><h3>Últimos 10 MVP</h3><p className="muted">Los 20 ganadores de 2016 a 2025, su boleta completa y si el WAR respalda la decisión.</p></Link>
           <Link to="/que-premian" className="card" style={{ color: 'inherit' }}><h3>Qué premian</h3><p className="muted">Qué pesa más (WAR, playoffs, jonrones), qué cambió en la década y por qué los lanzadores no ganan.</p></Link>
           <Link to="/injusticias" className="card" style={{ color: 'inherit' }}><h3>Debió ser MVP</h3><p className="muted">Los jugadores con más WAR que el ganador y por qué se quedaron sin el premio.</p></Link>
-          <Link to="/metodologia" className="card" style={{ color: 'inherit' }}><h3>Metodología</h3><p className="muted">De dónde salen los datos, glosario de estadísticas y límites del análisis.</p></Link>
-          <div className="card" style={{ opacity: 0.8 }}><h3>Próximamente: Cy Young</h3><p className="muted">El mismo tratamiento para el premio de los lanzadores.</p></div>
+          <Link to="/metodologia" className="card" style={{ color: 'inherit' }}><h3>Metodología</h3><p className="muted">De dónde salen los datos, cómo se eligió el top 5 y los límites del análisis.</p></Link>
+          <Link to="/glosario" className="card" style={{ color: 'inherit' }}><h3>Glosario</h3><p className="muted">Cada estadística explicada en lenguaje de aficionado: qué mide, cómo se lee y cuánto vale.</p></Link>
         </div>
       </Section>
     </div>

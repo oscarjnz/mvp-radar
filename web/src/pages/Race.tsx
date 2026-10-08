@@ -6,6 +6,7 @@ import { leagueName, slash } from '../lib/format'
 import { CRITERIA, PRESETS, rankPool, type Weights } from '../lib/scoring'
 import { DataTable, ErrorBox, Loading, PlayerCard, Section, Tabs } from '../components/ui'
 import { ValueScatter, WarDumbbell, WarParts, LabBars } from '../components/racecharts'
+import { P, Rich } from '../components/Term'
 
 const PANEL: Record<League, string[]> = {
   AL: ['Yordan Alvarez', 'Junior Caminero', 'Bobby Witt Jr.', 'Cam Schlittler', 'Ben Rice'],
@@ -48,14 +49,14 @@ export default function Race() {
     <div className="wrap">
       <div className="eyebrow">Carrera 2026</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Top 5 al MVP: {leagueName(lg)}</h1>
-      <p className="lede">Temporada regular cerrada el 27 de septiembre. Orden basado en WAR de dos fuentes, producción, impacto en juegos, equipo y disponibilidad. Cada tarjeta lleva a su análisis completo.</p>
+      <P className="lede">Temporada regular cerrada el 27 de septiembre. Orden basado en WAR de dos fuentes, producción, impacto en juegos, equipo y disponibilidad. Cada tarjeta lleva a su análisis completo.</P>
       <Tabs value={lg} onChange={(v) => setSp({ liga: v })} options={[{ id: 'AL', label: 'Liga Americana' }, { id: 'NL', label: 'Liga Nacional' }]} />
 
       <div className="grid" style={{ marginTop: 20 }}>
         {top.map((c) => (
           <div key={c.id}>
             <PlayerCard c={c} />
-            <p className="small muted" style={{ margin: '6px 4px 0' }}>{c.narrative.tagline} <b>{c.narrative.outlook}</b></p>
+            <P className="small muted" style={{ margin: '6px 4px 0' }}>{c.narrative.tagline} <b>{c.narrative.outlook}</b></P>
           </div>
         ))}
       </div>
@@ -76,7 +77,7 @@ export default function Race() {
             caption="Candidatos y burbuja"
             left={[1]}
           />
-          <p className="small muted" style={{ marginTop: 8 }}>★ equipo en playoffs. WPA y RE24 de Baseball Reference (solo bateadores). fWAR de FanGraphs (vía MLB Stats API) y bWAR de Baseball Reference. Ohtani suma bateo y pitcheo.</p>
+          <P className="small muted" style={{ marginTop: 8 }}>★ equipo en playoffs. WPA y RE24 de Baseball Reference (solo bateadores). fWAR de FanGraphs (vía MLB Stats API) y bWAR de Baseball Reference. Ohtani suma bateo y pitcheo.</P>
         </div>
       </Section>
 
@@ -89,19 +90,19 @@ export default function Race() {
           </div>
           {CRITERIA.map((cr) => (
             <div className="slider-row" key={cr.key}>
-              <label htmlFor={`w-${cr.key}`} title={cr.hint}>{cr.label}</label>
+              <label htmlFor={`w-${cr.key}`} title={cr.hint}><Rich>{cr.label}</Rich></label>
               <input id={`w-${cr.key}`} type="range" min={0} max={100} value={weights[cr.key]} onChange={(e) => { setWeights({ ...weights, [cr.key]: Number(e.target.value) }); setPreset('') }} />
               <span className="num">{weights[cr.key]}</span>
             </div>
           ))}
-          <p className="small muted">{PRESETS.find((p) => p.id === preset)?.note || 'Pesos personalizados.'}</p>
+          <P className="small muted">{PRESETS.find((p) => p.id === preset)?.note || 'Pesos personalizados.'}</P>
           <LabBars rows={ranking.slice(0, 8)} weights={weights} />
         </div>
       </Section>
 
       <Section title="Comparado con la encuesta de MLB.com" eyebrow="Contraste">
         <div className="card">
-          <p>El panel de MLB.com (encuesta de septiembre) puso este orden para {leagueName(lg)}: <b>{PANEL[lg].join(' · ')}</b>. El análisis de aquí difiere sobre todo en cómo trata a los lanzadores y a quien tiene mucho WAR en un equipo sin playoffs.</p>
+          <P>El panel de MLB.com (encuesta de septiembre) puso este orden para {leagueName(lg)}: <b>{PANEL[lg].join(' · ')}</b>. El análisis de aquí difiere sobre todo en cómo trata a los lanzadores y a quien tiene mucho WAR en un equipo sin playoffs.</P>
         </div>
       </Section>
 
@@ -111,7 +112,7 @@ export default function Race() {
             <div className="card" key={c.id}>
               <h3><Link to={`/jugador/${c.id}`}>{c.name}</Link> <span className="muted small">({c.team})</span></h3>
               <div className="statline"><span><b>{c.war.f}</b> fWAR</span><span><b>{c.war.b}</b> bWAR</span>{c.hit ? <><span><b>{c.hit.wrcPlus}</b> wRC+</span><span><b>{c.hit.hr}</b> HR</span><span><b>{slash(c.hit.ops)}</b> OPS</span></> : null}{c.pit ? <><span><b>{c.pit.era}</b> ERA</span><span><b>{c.pit.so}</b> K</span></> : null}</div>
-              <p style={{ marginTop: 8 }}>{BUBBLE_WHY[c.name]}</p>
+              <P style={{ marginTop: 8 }}>{BUBBLE_WHY[c.name]}</P>
             </div>
           ))}
         </div>

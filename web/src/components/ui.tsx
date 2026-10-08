@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Candidate } from '../lib/types'
 import { headshot, slash, teamLogo } from '../lib/format'
 import { rankVar } from './chartkit'
+import { P, T, Rich } from './Term'
 
 export function Loading({ h = 160 }: { h?: number }) {
   return <div className="skeleton" style={{ minHeight: h }} aria-busy="true" aria-label="Cargando" />
@@ -17,7 +18,7 @@ export function Section({ title, eyebrow, children, lede }: { title?: string; ey
     <section className="section">
       {eyebrow ? <div className="eyebrow">{eyebrow}</div> : null}
       {title ? <h2>{title}</h2> : null}
-      {lede ? <p className="lede">{lede}</p> : null}
+      {lede ? <P className="lede">{lede}</P> : null}
       {children}
     </section>
   )
@@ -30,10 +31,10 @@ export function StatLine({ c }: { c: Candidate }) {
     items.push(<span key="hr"><b>{c.hit.hr}</b> HR</span>)
     items.push(<span key="rbi"><b>{c.hit.rbi}</b> RBI</span>)
     items.push(<span key="sb"><b>{c.hit.sb}</b> SB</span>)
-    items.push(<span key="wrc"><b>{c.hit.wrcPlus}</b> wRC+</span>)
+    items.push(<span key="wrc"><b>{c.hit.wrcPlus}</b> <T k="wrcplus">wRC+</T></span>)
   }
   if (c.pit) {
-    items.push(<span key="era"><b>{c.pit.era}</b> ERA</span>)
+    items.push(<span key="era"><b>{c.pit.era}</b> <T k="era">ERA</T></span>)
     items.push(<span key="ip"><b>{c.pit.ip}</b> IP</span>)
     items.push(<span key="k"><b>{c.pit.so}</b> K</span>)
   }
@@ -53,7 +54,7 @@ export function PlayerCard({ c, showWar = true }: { c: Candidate; showWar?: bool
   const style = { ['--rank-color' as any]: c.top5 ? rankVar(c.rank) : 'var(--muted)' } as CSSProperties
   return (
     <Link to={`/jugador/${c.id}`} className="card pcard" style={style}>
-      <img className="photo" src={headshot(c.id, 168)} alt={c.name} loading="lazy" width={84} height={84} />
+      <img className="photo" src={headshot(c.id, 168)} alt={c.name} width={84} />
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {c.top5 ? <span className="rank-badge">{c.rank}</span> : null}
@@ -62,7 +63,7 @@ export function PlayerCard({ c, showWar = true }: { c: Candidate; showWar?: bool
         <div className="small muted" style={{ margin: '2px 0 6px' }}>{c.teamName} · {c.bio.pos === 'TWP' ? 'Dos vías' : c.bio.pos}</div>
         <TeamChip c={c} />
         <StatLine c={c} />
-        {showWar ? <div className="statline"><span><b>{c.war.f}</b> fWAR</span><span><b>{c.war.b}</b> bWAR</span></div> : null}
+        {showWar ? <div className="statline"><span><b>{c.war.f}</b> <T k="fwar">fWAR</T></span><span><b>{c.war.b}</b> <T k="bwar">bWAR</T></span></div> : null}
       </div>
     </Link>
   )
@@ -83,7 +84,7 @@ export function DataTable({ head, rows, caption, left = [] }: { head: string[]; 
     <div className="tscroll">
       <table className="t">
         {caption ? <caption className="sr-only" style={{ position: 'absolute', left: -9999 }}>{caption}</caption> : null}
-        <thead><tr>{head.map((h, i) => <th key={h + i} className={i === 0 || left.includes(i) ? 'l' : ''}>{h}</th>)}</tr></thead>
+        <thead><tr>{head.map((h, i) => <th key={h + i} className={i === 0 || left.includes(i) ? 'l' : ''}><Rich>{h}</Rich></th>)}</tr></thead>
         <tbody>{rows.map((r, i) => <tr key={i}>{r.map((cell, j) => <td key={j} className={j === 0 || left.includes(j) ? 'l' : ''}>{cell}</td>)}</tr>)}</tbody>
       </table>
     </div>

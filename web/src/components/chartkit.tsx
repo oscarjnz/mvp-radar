@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { interpolateRgb } from 'd3'
 import { useTheme } from '../lib/theme'
+import { Rich } from './Term'
 
 /** Ancho real del contenedor (para que el texto de los SVG no se encoja en moviles). */
 export function useWidth<T extends HTMLElement>(min = 280): [React.RefObject<T>, number] {
@@ -66,8 +67,8 @@ export function Legend({ items }: { items: { label: string; color: string }[] })
 export function ChartHead({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="charthead">
-      <h3>{title}</h3>
-      {sub ? <span className="muted small">{sub}</span> : null}
+      <h3><Rich>{title}</Rich></h3>
+      {sub ? <span className="muted small"><Rich>{sub}</Rich></span> : null}
     </div>
   )
 }

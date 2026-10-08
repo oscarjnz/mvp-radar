@@ -5,6 +5,7 @@ import type { HistLeague, League } from '../lib/types'
 import { headshot, leagueName, slash, teamLogo } from '../lib/format'
 import { DataTable, ErrorBox, Loading, Section, Tabs } from '../components/ui'
 import { BallotBars } from '../components/histcharts'
+import { P, L } from '../components/Term'
 
 export const NOTES: Record<string, string> = {
   '2016-AL': 'Ganó aunque su equipo no llegó a octubre: el WAR pesó más que la posición en la tabla. Mookie Betts fue segundo.',
@@ -56,13 +57,13 @@ export default function History() {
     <div className="wrap">
       <div className="eyebrow">Historia</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Los últimos 10 MVP: 2016 a 2025</h1>
-      <p className="lede">Veinte premios entre las dos ligas. Para cada uno: quién ganó, con qué números, quién estuvo cerca y si el WAR respalda la decisión.</p>
+      <P className="lede">Veinte premios entre las dos ligas. Para cada uno: quién ganó, con qué números, quién estuvo cerca y si el WAR respalda la decisión.</P>
 
       <div className="stat-tiles">
-        <div className="tile"><div className="v">{s.hitters}</div><div className="l">MVP fueron bateadores</div></div>
-        <div className="tile"><div className="v">{s.twoWay}</div><div className="l">de dos vías, todos Ohtani</div></div>
-        <div className="tile"><div className="v">{s.pitchers}</div><div className="l">lanzadores puros ganaron</div></div>
-        <div className="tile"><div className="v">{s.unanimous}</div><div className="l">votaciones unánimes, todas desde 2021</div></div>
+        <div className="tile"><div className="v">{s.hitters}</div><L>MVP fueron bateadores</L></div>
+        <div className="tile"><div className="v">{s.twoWay}</div><L>de dos vías, todos Ohtani</L></div>
+        <div className="tile"><div className="v">{s.pitchers}</div><L>lanzadores puros ganaron</L></div>
+        <div className="tile"><div className="v">{s.unanimous}</div><L>votaciones unánimes, todas desde 2021</L></div>
       </div>
 
       <Section title="Elige un año" eyebrow="Explorador">
@@ -75,7 +76,7 @@ export default function History() {
         <div className="grid g2">
           <div className="card">
             <div className="pcard" style={{ gridTemplateColumns: '96px 1fr' }}>
-              <img className="photo" style={{ width: 96, height: 96, borderColor: 'var(--s1)' }} src={headshot(w.mlbId, 192)} alt={w.name} loading="lazy" />
+              <img className="photo" style={{ width: 96, borderColor: 'var(--s1)', borderRadius: 14, border: '3px solid var(--s1)' }} src={headshot(w.mlbId, 192)} alt={w.name} />
               <div>
                 <div className="eyebrow" style={{ marginBottom: 2 }}>MVP {year} · {leagueName(lg)}</div>
                 <h3 style={{ margin: 0 }}>{w.name}</h3>
@@ -91,10 +92,10 @@ export default function History() {
                 </div>
               </div>
             </div>
-            <p style={{ marginTop: 14 }}>{NOTES[`${year}-${lg}`]}</p>
-            <p className="small muted">
+            <P style={{ marginTop: 14 }}>{NOTES[`${year}-${lg}`]}</P>
+            <P className="small muted">
               Veredicto por WAR: el mejor WAR entre los votados fue <b>{d.warLeader.name}</b> ({d.warLeader.war}), {d.warGap <= 0 ? 'el propio ganador' : `${d.warGap} por encima del ganador`}. Criterio: acertado si la brecha es de 0.3 o menos; discutible hasta 1.5; cuestionable si es mayor.
-            </p>
+            </P>
           </div>
           <div className="card"><BallotBars ballots={d.top10} title={`Boleta ${year}: ${leagueName(lg)}`} /></div>
         </div>
@@ -103,10 +104,10 @@ export default function History() {
       <Section title="Los 20 ganadores" eyebrow="Tabla">
         <div className="card">
           <DataTable head={['Año', 'Liga', 'MVP', 'Pos.', 'Equipo', 'WAR', 'HR', 'OPS / ERA', 'Voto', 'Veredicto']} rows={rows} caption="Los 20 ganadores del MVP" left={[1, 2, 3, 4, 9]} />
-          <p className="small muted" style={{ marginTop: 8 }}>★ equipo en playoffs. WAR de Baseball Reference. Voto: porcentaje de los puntos posibles. Fuente de votaciones: Baseball Reference (Bill Deane, Award Voting).</p>
+          <P className="small muted" style={{ marginTop: 8 }}>★ equipo en playoffs. WAR de Baseball Reference. Voto: porcentaje de los puntos posibles. Fuente de votaciones: Baseball Reference (Bill Deane, Award Voting).</P>
         </div>
       </Section>
-      <p className="small muted" style={{ marginTop: 20 }}>¿Qué se premió más y cómo cambió? Está en <Link to="/que-premian">Qué premian los votantes</Link>. ¿A quién le quitaron el premio? <Link to="/injusticias">Debió ser MVP</Link>.</p>
+      <P className="small muted" style={{ marginTop: 20 }}>¿Qué se premió más y cómo cambió? Está en <Link to="/que-premian">Qué premian los votantes</Link>. ¿A quién le quitaron el premio? <Link to="/injusticias">Debió ser MVP</Link>.</P>
     </div>
   )
 }

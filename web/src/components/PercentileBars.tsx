@@ -1,4 +1,5 @@
 import { usePctColor } from './chartkit'
+import { Rich } from './Term'
 
 export interface PctRow {
   label: string
@@ -17,7 +18,7 @@ export default function PercentileBars({ rows, title }: { rows: PctRow[]; title?
         const c = color(r.pct)
         return (
           <div role="row" key={r.label} title={r.hint} style={{ display: 'grid', gridTemplateColumns: 'minmax(96px, 1.1fr) 3fr 56px', alignItems: 'center', gap: 10, padding: '5px 0' }}>
-            <div role="cell" style={{ fontSize: '0.85rem', color: 'var(--ink-2)' }}>{r.label}</div>
+            <div role="cell" style={{ fontSize: '0.85rem', color: 'var(--ink-2)' }}><Rich>{r.label}</Rich></div>
             <div role="cell" style={{ position: 'relative', height: 22 }}>
               <div style={{ position: 'absolute', left: 0, right: 0, top: 9, height: 4, borderRadius: 2, background: 'var(--grid)' }} />
               <div style={{ position: 'absolute', left: 0, width: `${r.pct}%`, top: 9, height: 4, borderRadius: 2, background: c }} />

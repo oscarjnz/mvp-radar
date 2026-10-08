@@ -3,6 +3,7 @@ import { useHistory } from '../lib/data'
 import { headshot } from '../lib/format'
 import { DataTable, ErrorBox, Loading, Section } from '../components/ui'
 import { GapDumbbell } from '../components/histcharts'
+import { P, Li } from '../components/Term'
 
 const WHY: Record<string, string> = {
   '2018-Jacob deGrom': 'Ganó el Cy Young de la Nacional y aun así no pasó del quinto lugar en el MVP. Su equipo terminó con más derrotas que victorias.',
@@ -27,11 +28,11 @@ export default function Snubs() {
     <div className="wrap">
       <div className="eyebrow">Lo que pudo ser</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Debió ser MVP</h1>
-      <p className="lede">Se buscaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones: {sn.filter((x: any) => x.role === 'pitcher').length} lanzadores y {sn.filter((x: any) => x.role !== 'pitcher').length} bateadores.</p>
+      <P className="lede">Se buscaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones: {sn.filter((x: any) => x.role === 'pitcher').length} lanzadores y {sn.filter((x: any) => x.role !== 'pitcher').length} bateadores.</P>
 
       <Section title="La brecha en un vistazo" eyebrow="Gráfico">
         <div className="card"><GapDumbbell rows={rows} /></div>
-        <p className="small muted" style={{ marginTop: 8 }}>WAR de Baseball Reference. Un WAR más alto no siempre es «mejor jugador», pero si el voto dice «valor», esta es la contradicción que hay que explicar.</p>
+        <P className="small muted" style={{ marginTop: 8 }}>WAR de Baseball Reference. Un WAR más alto no siempre es «mejor jugador», pero si el voto dice «valor», esta es la contradicción que hay que explicar.</P>
       </Section>
 
       <Section title="Los casos" eyebrow="Uno por uno">
@@ -42,7 +43,7 @@ export default function Snubs() {
             return (
               <div className="card" key={key}>
                 <div className="pcard" style={{ gridTemplateColumns: '72px 1fr' }}>
-                  <img className="photo" style={{ width: 72, height: 72, borderColor: 'var(--s2)' }} src={headshot(x.mlbId, 144)} alt={x.name} loading="lazy" />
+                  <img className="photo" style={{ width: 72, borderRadius: 12, border: '3px solid var(--s2)' }} src={headshot(x.mlbId, 144)} alt={x.name} />
                   <div>
                     <div className="eyebrow" style={{ marginBottom: 0 }}>{x.year} · {x.lg === 'AL' ? 'Americana' : 'Nacional'} · terminó {x.voteRank}.º</div>
                     <h3 style={{ margin: 0 }}>{x.name} <span className="muted small">({x.team})</span></h3>
@@ -52,13 +53,13 @@ export default function Snubs() {
                     </div>
                   </div>
                 </div>
-                <p style={{ marginTop: 10 }}>
+                <P style={{ marginTop: 10 }}>
                   {WHY[key] ||
                     (isP
                       ? `Lanzador que superó al ganador por ${x.warGap} de WAR y terminó ${x.voteRank}.º con ${x.share}% del voto. Es parte del patrón: el líder de WAR entre los votados que fue lanzador nunca ganó.`
                       : `Terminó ${x.voteRank}.º con ${x.share}% del voto, con ${x.warGap} más de WAR que ${x.winner}.`)}
-                </p>
-                {x.pit ? <p className="small muted">{x.pit.w}-{x.pit.l}, {x.pit.era} de efectividad, {x.pit.so} ponches en {x.pit.ip} entradas.</p> : x.bat ? <p className="small muted">{x.bat.avg}/{x.bat.obp}/{x.bat.slg}, {x.bat.hr} HR, {x.bat.rbi} RBI.</p> : null}
+                </P>
+                {x.pit ? <P className="small muted">{x.pit.w}-{x.pit.l}, {x.pit.era} de efectividad, {x.pit.so} ponches en {x.pit.ip} entradas.</P> : x.bat ? <P className="small muted">{x.bat.avg}/{x.bat.obp}/{x.bat.slg}, {x.bat.hr} HR, {x.bat.rbi} RBI.</P> : null}
               </div>
             )
           })}
@@ -69,16 +70,16 @@ export default function Snubs() {
         <div className="card">
           <DataTable head={['Año', 'Liga', 'Jugador', 'Puesto', 'WAR', 'Ganador', 'WAR ganador', 'Brecha']}
             rows={data.nearMisses.map((x: any) => [x.year, x.lg, x.name, `${x.voteRank}.º`, x.war, x.winner, x.winnerWar, `+${x.warGap}`])} left={[1, 2, 5]} />
-          <p className="small muted" style={{ marginTop: 8 }}>Brechas tan pequeñas caen dentro del margen de error del WAR. Se incluyen porque ayudan a leer casos como los de la Nacional en 2025.</p>
+          <P className="small muted" style={{ marginTop: 8 }}>Brechas tan pequeñas caen dentro del margen de error del WAR. Se incluyen porque ayudan a leer casos como los de la Nacional en 2025.</P>
         </div>
       </Section>
 
       <Section title="Lo que enseña" eyebrow="Lecciones">
         <div className="card">
           <ul className="clean">
-            <li><b>El pitcheo es el gran perdedor.</b> Los tres mayores huecos de WAR de la década (deGrom, Nola y Wheeler) son lanzadores.</li>
-            <li><b>El nombre y el equipo pesan.</b> Trout 2019, Harper 2021 y Ohtani 2021 y 2023 ganaron frente a alguien con más WAR o con un equipo mejor.</li>
-            <li><b>El WAR no resuelve el debate.</b> En 2026, McGonigle tiene 7.1 de bWAR y 5.4 de fWAR: la misma temporada, dos historias. <Link to="/carrera">Mira la carrera actual</Link>.</li>
+            <Li><b>El pitcheo es el gran perdedor.</b> Los tres mayores huecos de WAR de la década (deGrom, Nola y Wheeler) son lanzadores.</Li>
+            <Li><b>El nombre y el equipo pesan.</b> Trout 2019, Harper 2021 y Ohtani 2021 y 2023 ganaron frente a alguien con más WAR o con un equipo mejor.</Li>
+            <Li><b>El WAR no resuelve el debate.</b> En 2026, McGonigle tiene 7.1 de bWAR y 5.4 de fWAR: la misma temporada, dos historias. <Link to="/carrera">Mira la carrera actual</Link>.</Li>
           </ul>
         </div>
       </Section>

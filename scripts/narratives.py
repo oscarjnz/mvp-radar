@@ -6,10 +6,23 @@ Sin guiones largos (regla de estilo del proyecto).
 
 def _rec(s):
     t = s.get("teamRec") or {}
-    po = "con boleto a playoffs" if t.get("playoffs") else "fuera de playoffs"
-    if t.get("bestRecord"):
-        po = "con el mejor récord de su liga"
-    return f"{t.get('w')}-{t.get('l')}", po
+    return f"{t.get('w')}-{t.get('l')}"
+
+
+def _team(s, subject, plural=False, mlb_best=False):
+    """Oracion sobre el equipo, sin redundancias y con concordancia (sin punto final)."""
+    t = s.get("teamRec") or {}
+    v1, v2, v3 = ("terminaron", "ganaron", "clasificaron") if plural else ("terminó", "ganó", "clasificó")
+    rec = f"{t.get('w')}-{t.get('l')}"
+    if mlb_best:
+        return f"{subject} {v1} {rec}, el mejor récord de las Grandes Ligas, y {v2} su división"
+    if t.get("bestRecord") and t.get("divWinner"):
+        return f"{subject} {v1} {rec}, el mejor récord de su liga, y {v2} su división"
+    if t.get("divWinner"):
+        return f"{subject} {v1} {rec} y {v2} su división"
+    if t.get("playoffs"):
+        return f"{subject} {v1} {rec} y {v3} a playoffs como comodín"
+    return f"{subject} {v1} {rec} y quedó fuera de playoffs".replace("quedó", "quedaron" if plural else "quedó")
 
 
 def _brl(s):
@@ -28,14 +41,14 @@ def narrative_for(s):
 
 def _alvarez(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "El mejor bate de la Liga Americana, con la etiqueta de designado.",
         "pros": [
             f"{h['wrcPlus']} de wRC+: el mejor de la liga, con una brecha enorme sobre el segundo bateador.",
             f"Línea de {h['avg']}/{h['obp']}/{h['slg']} con {h['hr']} jonrones y {h['rbi']} impulsadas.",
             f"WPA de {h['wpa']} y RE24 de {h['re24']}: es quien más cambió el resultado de los partidos con el bate.",
-            f"Houston terminó {rec} y ganó su división ({po}); su bate sostuvo esa carrera.",
+            f"{_team(s, 'Houston')}; su bate sostuvo esa carrera.",
         ],
         "cons": [
             f"Jugó casi siempre de bateador designado: defensa de {h['fld']} y corrido de {h['bsr']} carreras. Su WAR ({s['war']['f']}) queda por debajo de lo que dice su bate.",
@@ -49,14 +62,14 @@ def _alvarez(s):
 
 def _schlittler(s):
     p = s["pit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "Un as de 25 años que cargó a unos Yankees golpeados por las lesiones.",
         "pros": [
             f"{p['era']} de efectividad en {p['ip']} entradas con {p['so']} ponches; FIP de {p['fip']}.",
             f"{s['war']['b']} de bWAR (el más alto de la liga) y {s['war']['f']} de fWAR.",
             "Permitió una carrera o ninguna en 21 aperturas, récord de franquicia de los Yankees.",
-            f"Nueva York terminó {rec} ({po}) con Aaron Judge lesionado buena parte del año (66 juegos).",
+            f"{_team(s, 'Nueva York')}, con Aaron Judge lesionado buena parte del año (66 juegos).",
         ],
         "cons": [
             "El último lanzador en ganar el MVP fue Clayton Kershaw (Nacional, 2014); en la Americana, Justin Verlander (2011).",
@@ -70,13 +83,13 @@ def _schlittler(s):
 
 def _caminero(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "Poder de élite, mejor ojo y el mejor récord de la Americana.",
         "pros": [
             f"{h['hr']} jonrones: segunda temporada seguida de 40 o más, con {h['wrcPlus']} de wRC+.",
             f"Subió su OBP a {h['obp']} y mejoró su disciplina (más boletos y pocos ponches).",
-            f"Tampa Bay ({rec}) tuvo el mejor récord de la liga: {po}.",
+            f"{_team(s, 'Tampa Bay')}.",
             _brl(s),
         ],
         "cons": [
@@ -90,7 +103,7 @@ def _caminero(s):
 
 def _witt(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "El jugador más completo de la Americana, en un equipo que perdió.",
         "pros": [
@@ -100,7 +113,7 @@ def _witt(s):
         ],
         "cons": [
             f"Su bateo bajó a {h['wrcPlus']} de wRC+ (lejos de su gran 2024).",
-            f"Kansas City terminó {rec}: sin playoffs. Los votantes casi nunca premian a un líder de WAR en un equipo perdedor sin una temporada de 10 o más.",
+            f"{_team(s, 'Kansas City')}. Los votantes casi nunca premian a un líder de WAR en un equipo perdedor sin una temporada de 10 o más.",
         ],
         "verdict": "Si el voto fuera puramente por WAR, estaría arriba. Con un equipo de 69 victorias y una línea ofensiva solo buena, su techo realista es el cuarto lugar.",
         "outlook": "Probable top 5; improbable top 2.",
@@ -109,7 +122,7 @@ def _witt(s):
 
 def _mcgonigle(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     novato = (s["bio"].get("debut") or "").startswith("2026")
     return {
         "tagline": ("Un novato de 21 años" if novato else "Un joven de 21 años") + " con el mejor bWAR entre los bateadores de la Americana.",
@@ -119,7 +132,7 @@ def _mcgonigle(s):
             f"Defensa y corrido positivos ({h['fld']} y {h['bsr']} carreras).",
         ],
         "cons": [
-            f"Detroit terminó {rec}: fuera de playoffs.",
+            f"{_team(s, 'Detroit')}.",
             f"Su wRC+ de {h['wrcPlus']} es sólido, no dominante. Gran parte de su bWAR viene de lo que mide Baseball Reference en defensa y posición.",
             "Los votantes suelen reservar el voto a los novatos para el premio de Novato del Año.",
         ],
@@ -130,14 +143,14 @@ def _mcgonigle(s):
 
 def _pca(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "La temporada más completa del béisbol: 40 jonrones, 40 robos y defensa de élite.",
         "pros": [
             f"{s['war']['f']} de fWAR y {s['war']['b']} de bWAR: lidera ambos y supera al segundo bateador de la Nacional por más de cuatro victorias de fWAR.",
             f"{h['hr']} jonrones y {h['sb']} bases robadas: miembro del club 40-40.",
             f"Defensa de {h['fld']} carreras (MLB.com lo considera posiblemente el mejor defensor de cualquier posición) y {h['bsr']} en las bases.",
-            f"Los Cubs terminaron {rec} y aseguraron el comodín: {po}.",
+            f"{_team(s, 'Los Cubs', plural=True)}.",
         ],
         "cons": [
             f"{h['so']} ponches en {h['pa']} turnos (alto) y un OBP de {h['obp']}; su wRC+ ({h['wrcPlus']}) es muy bueno, no histórico.",
@@ -150,14 +163,14 @@ def _pca(s):
 
 def _ohtani(s):
     h, p = s["hit"], s["pit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "Aun lesionado y con menos lanzamientos, sigue siendo el único jugador de dos vías.",
         "pros": [
             f"Bateo: {h['avg']}/{h['obp']}/{h['slg']} con {h['hr']} jonrones y {h['wrcPlus']} de wRC+.",
             f"Pitcheo: {p['era']} de efectividad y {p['so']} ponches en {p['ip']} entradas antes de lesionarse.",
             f"Valor combinado de {s['war']['f']} de fWAR ({h['fwar']} bateando y {p['fwar']} pitcheando).",
-            f"Los Dodgers terminaron {rec}: {po}.",
+            f"{_team(s, 'Los Dodgers', plural=True)}.",
         ],
         "cons": [
             f"Jugó {h['g']} partidos y tuvo molestias en la rodilla izquierda y el bíceps derecho; no lanzó en el tramo final.",
@@ -171,14 +184,14 @@ def _ohtani(s):
 
 def _misio(s):
     p = s["pit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "Una temporada de pitcheo de las más dominantes de la era moderna.",
         "pros": [
             f"{p['era']} de efectividad, {p['whip']} de WHIP y {p['so']} ponches en {p['ip']} entradas.",
             f"{s['war']['f']} de fWAR y {s['war']['b']} de bWAR; FIP de {p['fip']}.",
             "Según MLB.com, el OPS en contra de .474 es el segundo más bajo de cualquier abridor calificado desde 1969 (solo Pedro Martínez en 2000, con .473, lo supera).",
-            f"Milwaukee ({rec}) tuvo el mejor récord de las Grandes Ligas: {po}.",
+            f"{_team(s, 'Milwaukee', mlb_best=True)}.",
         ],
         "cons": [
             "Es lanzador: la historia reciente es contraria y su premio natural es el Cy Young (lo gana casi seguro).",
@@ -191,7 +204,7 @@ def _misio(s):
 
 def _edlc(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "Un final de temporada explosivo y el club 30-30.",
         "pros": [
@@ -200,7 +213,7 @@ def _edlc(s):
             "En sus últimos 27 partidos antes de la encuesta final bateaba .404 con ocho jonrones.",
         ],
         "cons": [
-            f"Cincinnati terminó {rec}: {po}.",
+            f"{_team(s, 'Cincinnati')}.",
             f"Defensa de {h['fld']} carreras, {h['so']} ponches y un bWAR ({s['war']['b']}) algo menor que su fWAR ({s['war']['f']}).",
         ],
         "verdict": "El jugador más emocionante de la liga con un equipo que no jugó octubre. Su racha final le ganó votos, no el premio.",
@@ -210,13 +223,13 @@ def _edlc(s):
 
 def _turang(s):
     h = s["hit"]
-    rec, po = _rec(s)
+    rec = _rec(s)
     return {
         "tagline": "El segunda base del mejor equipo del béisbol.",
         "pros": [
             f"{s['war']['b']} de bWAR y {s['war']['f']} de fWAR con defensa de {h['fld']} carreras.",
             f"{h['rbi']} impulsadas, {h['r']} anotadas y {h['sb']} bases robadas, con WPA de {h['wpa']}.",
-            f"Milwaukee terminó {rec}: {po}.",
+            f"{_team(s, 'Milwaukee', mlb_best=True)}.",
         ],
         "cons": [
             f"Su bateo es bueno, no estelar ({h['wrcPlus']} de wRC+, {h['hr']} jonrones).",
