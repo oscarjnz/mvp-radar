@@ -287,6 +287,31 @@ const OUTCOME = ['Bola', 'Strike cantado', 'Swing y fallo', 'Foul', 'En juego', 
 const ZONE_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '11', '12', '13', '14']
 const GAP = 1.5
 
+type ScaleFn = (v: number) => number
+interface ZShape { x: number; y: number; w: number; h: number; lx: number; ly: number }
+
+/** Geometría de las 13 zonas Statcast (1 a 9 dentro, 11 a 14 los cuatro cuadrantes de afuera). */
+function zoneShapes(x: ScaleFn, y: ScaleFn, szTop: number, szBot: number, X0: number, X1: number, Z0: number, Z1: number) {
+  const s: Record<string, ZShape> = {}
+  const cw = (2 * HW) / 3, ch = (szTop - szBot) / 3, mid = (szTop + szBot) / 2
+  for (let i = 0; i < 9; i++) {
+    const col = i % 3, row = Math.floor(i / 3)
+    const xa = x(-HW + col * cw), xb = x(-HW + (col + 1) * cw)
+    const ya = y(szTop - row * ch), yb = y(szTop - (row + 1) * ch)
+    s[String(i + 1)] = { x: xa + GAP, y: ya + GAP, w: xb - xa - 2 * GAP, h: yb - ya - 2 * GAP, lx: (xa + xb) / 2, ly: (ya + yb) / 2 }
+  }
+  const q = (k: string, xa: number, xb: number, za: number, zb: number, lx: number, lz: number) => {
+    s[k] = { x: x(xa) + GAP, y: y(zb) + GAP, w: x(xb) - x(xa) - 2 * GAP, h: y(za) - y(zb) - 2 * GAP, lx: x(lx), ly: y(lz) }
+  }
+  const cxl = (X0 - HW) / 2, cxr = (HW + X1) / 2
+  const czt = (szTop + Z1) / 2, czb = (szBot + Z0) / 2
+  q('11', X0, 0, mid, Z1, cxl, czt)
+  q('12', 0, X1, mid, Z1, cxr, czt)
+  q('13', X0, 0, Z0, mid, cxl, czb)
+  q('14', 0, X1, Z0, mid, cxr, czb)
+  return s
+}
+
 interface ZAgg { n: number; sw: number; wh: number; cs: number; pa: number; wn: number; vn: number; byCode: { code: string; n: number; v: number | null }[] }
 
 export function StrikeZoneView({ location, arsenal, zoneMap, szTop = 3.5, szBot = 1.5, title }: {
@@ -306,33 +331,11 @@ export function StrikeZoneView({ location, arsenal, zoneMap, szTop = 3.5, szBot 
   const PAD = 52 // espacio para home plate
   const x = scaleLinear().domain([X0, X1]).range([0, W])
   const y = scaleLinear().domain([Z0, Z1]).range([H, 0])
-  const mid = (szTop + szBot) / 2
-  const cw = (2 * HW) / 3
-  const ch = (szTop - szBot) / 3
   const colorOf = (code: string) => `var(--s${Math.min(5, codes.indexOf(code) + 1)})`
   const nameOf = (code: string) => arsenal.find((a) => a.code === code)?.name ?? code
   const on = (code: string) => !off.includes(code)
 
-  /* geometría de las 13 zonas */
-  const shapes = useMemo(() => {
-    const s: Record<string, { x: number; y: number; w: number; h: number; lx: number; ly: number }> = {}
-    for (let i = 0; i < 9; i++) {
-      const col = i % 3, row = Math.floor(i / 3)
-      const xa = x(-HW + col * cw), xb = x(-HW + (col + 1) * cw)
-      const ya = y(szTop - row * ch), yb = y(szTop - (row + 1) * ch)
-      s[String(i + 1)] = { x: xa + GAP, y: ya + GAP, w: xb - xa - 2 * GAP, h: yb - ya - 2 * GAP, lx: (xa + xb) / 2, ly: (ya + yb) / 2 }
-    }
-    const q = (k: string, xa: number, xb: number, za: number, zb: number, lx: number, lz: number) => {
-      s[k] = { x: x(xa) + GAP, y: y(zb) + GAP, w: x(xb) - x(xa) - 2 * GAP, h: y(za) - y(zb) - 2 * GAP, lx: x(lx), ly: y(lz) }
-    }
-    const cxl = (X0 - HW) / 2, cxr = (HW + X1) / 2
-    const czt = (szTop + Z1) / 2, czb = (szBot + Z0) / 2
-    q('11', X0, 0, mid, Z1, cxl, czt)
-    q('12', 0, X1, mid, Z1, cxr, czt)
-    q('13', X0, 0, Z0, mid, cxl, czb)
-    q('14', 0, X1, Z0, mid, cxr, czb)
-    return s
-  }, [W, H, szTop, szBot]) // eslint-disable-line react-hooks/exhaustive-deps
+  const shapes = useMemo(() => zoneShapes(x, y, szTop, szBot, X0, X1, Z0, Z1), [W, H, szTop, szBot]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* agregados por zona con todos los lanzamientos de los tipos activos */
   const agg = useMemo(() => {
@@ -480,6 +483,213 @@ export function StrikeZoneView({ location, arsenal, zoneMap, szTop = 3.5, szBot 
               ? 'Cada bloque muestra el porcentaje de lanzamientos que cayó en esa zona. El rojo marca donde más tira y el azul donde menos. Pasa el cursor por un bloque para ver el desglose.'
               : `Se muestra una muestra de ${pts.length} lanzamientos. Pasa el cursor por un punto o por una zona para ver el detalle.`}
             {' '}La zona de strike usa el promedio de los bateadores enfrentados ({szBot.toFixed(1)} a {szTop.toFixed(1)} pies).
+          </div>
+        </div>
+      </div>
+      {node}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Zona de strike del bateador: qué le tiran y qué hace con eso           */
+/* ------------------------------------------------------------------ */
+const GROUP_NAME: Record<string, string> = { FB: 'Rectas', BR: 'Quebrados', OS: 'Cambios' }
+const GROUP_COLOR: Record<string, string> = { FB: 'var(--s1)', BR: 'var(--s2)', OS: 'var(--s3)' }
+const GROUPS_ORDER = ['FB', 'BR', 'OS']
+const HIT_OUTCOME = [
+  { label: 'Bola sin swing', color: 'var(--muted)' },
+  { label: 'Strike cantado', color: 'var(--s2)' },
+  { label: 'Swing y fallo', color: 'var(--bad)' },
+  { label: 'Foul', color: 'var(--s4)' },
+  { label: 'Bola en juego, out', color: 'var(--s1)' },
+  { label: 'Hit', color: 'var(--good)' },
+  { label: 'Jonrón', color: 'var(--s5)' },
+]
+type HMetric = 'n' | 'swing' | 'whiff' | 'woba' | 'xwoba'
+const HMETRICS: { k: HMetric; label: string }[] = [
+  { k: 'n', label: 'Lanzamientos recibidos' }, { k: 'swing', label: 'Swing' }, { k: 'whiff', label: 'Whiff' },
+  { k: 'woba', label: 'wOBA' }, { k: 'xwoba', label: 'xwOBA' },
+]
+
+interface HAgg { n: number; sw: number; wh: number; cs: number; pa: number; wn: number; xn: number; bbe: number; evn: number; byG: { g: string; n: number }[] }
+
+export function HitterZoneView({ zoneMap, pitches, szTop = 3.5, szBot = 1.5, title }: {
+  zoneMap: Record<string, Record<string, any>>; pitches: any[]; szTop?: number; szBot?: number; title?: string
+}) {
+  const [ref, w0] = useWidth<HTMLDivElement>()
+  const [mode, setMode] = useState<'freq' | 'dots'>('freq')
+  const [metric, setMetric] = useState<HMetric>('xwoba')
+  const [off, setOff] = useState<string[]>([])
+  const [hz, setHz] = useState<string | null>(null)
+  const { show, hide, node } = useTip()
+  const color = usePctColor()
+
+  const W = Math.min(280, Math.max(220, w0))
+  const X0 = -1.25, X1 = 1.25, Z0 = szBot - 0.6, Z1 = szTop + 0.6
+  const H = Math.round((W * (Z1 - Z0)) / (X1 - X0))
+  const PAD = 52
+  const x = scaleLinear().domain([X0, X1]).range([0, W])
+  const y = scaleLinear().domain([Z0, Z1]).range([H, 0])
+  const shapes = useMemo(() => zoneShapes(x, y, szTop, szBot, X0, X1, Z0, Z1), [W, H, szTop, szBot]) // eslint-disable-line react-hooks/exhaustive-deps
+  const groups = useMemo(() => GROUPS_ORDER.filter((g) => ZONE_KEYS.some((k) => zoneMap[k]?.[g])), [zoneMap])
+  const on = (g: string) => !off.includes(g)
+
+  const agg = useMemo(() => {
+    const out: Record<string, HAgg> = {}
+    ZONE_KEYS.forEach((k) => {
+      const a: HAgg = { n: 0, sw: 0, wh: 0, cs: 0, pa: 0, wn: 0, xn: 0, bbe: 0, evn: 0, byG: [] }
+      groups.filter(on).forEach((g) => {
+        const z = zoneMap[k]?.[g]
+        if (!z) return
+        a.n += z.n; a.sw += z.sw; a.wh += z.wh; a.cs += z.cs; a.pa += z.pa
+        a.wn += (z.woba ?? 0) * z.pa; a.xn += (z.xwoba ?? 0) * z.pa
+        a.bbe += z.bbe; a.evn += (z.ev ?? 0) * z.bbe
+        a.byG.push({ g, n: z.n })
+      })
+      out[k] = a
+    })
+    return out
+  }, [zoneMap, groups, off]) // eslint-disable-line react-hooks/exhaustive-deps
+  const total = ZONE_KEYS.reduce((s, k) => s + agg[k].n, 0)
+  const MIN_N = 15, MIN_PA = 8
+  const valueOf = (a: HAgg): number | null => {
+    if (metric === 'n') return total ? a.n / total : null
+    if (metric === 'swing') return a.n >= MIN_N ? a.sw / a.n : null
+    if (metric === 'whiff') return a.n >= MIN_N && a.sw >= 8 ? a.wh / a.sw : null
+    if (metric === 'woba') return a.pa >= MIN_PA ? a.wn / a.pa : null
+    return a.pa >= MIN_PA ? a.xn / a.pa : null
+  }
+  const vals = ZONE_KEYS.map((k) => valueOf(agg[k]))
+  const maxV = Math.max(0.0001, ...vals.map((v) => v ?? 0))
+  const fmt = (v: number | null) => (v === null ? '·' : metric === 'woba' || metric === 'xwoba' ? v.toFixed(3).replace(/^0/, '') : `${(100 * v).toFixed(v >= 0.095 ? 0 : 1)}%`)
+  const fill = (v: number | null) => {
+    if (v === null) return null
+    const p = metric === 'woba' || metric === 'xwoba' ? Math.max(0, Math.min(100, ((v - 0.15) / 0.35) * 100)) : 12 + 83 * (v / maxV)
+    return color(p)
+  }
+  const pc = (v: number, d: number) => (d ? `${(100 * v / d).toFixed(v / d >= 0.095 ? 0 : 1)}%` : '-')
+  const metricLabel = HMETRICS.find((m) => m.k === metric)!.label
+
+  const zoneTip = (e: React.PointerEvent, k: string) => {
+    const a = agg[k]
+    if (!a.n) { show(e, <div><b>Zona {k}</b><br />Sin lanzamientos</div>); return }
+    show(e, (
+      <div>
+        <b>Zona {k}</b> <span className="muted">{ZONE_NAME[k]}</span>
+        <div><b>{a.n}</b> lanzamientos recibidos, <b>{pc(a.n, total)}</b> del total</div>
+        <div style={{ marginTop: 4 }}>
+          {[...a.byG].sort((p, q2) => q2.n - p.n).map((s) => (
+            <div key={s.g}><span style={{ color: GROUP_COLOR[s.g] }}>●</span> {GROUP_NAME[s.g]} <b>{pc(s.n, a.n)}</b></div>
+          ))}
+        </div>
+        <div style={{ marginTop: 4 }}>
+          Swing <b>{pc(a.sw, a.n)}</b> · Whiff <b>{a.sw ? pc(a.wh, a.sw) : '-'}</b>
+          <br />Strike cantado <b>{pc(a.cs, a.n)}</b>
+          {a.pa ? <><br />wOBA <b>{(a.wn / a.pa).toFixed(3).replace(/^0/, '')}</b> · xwOBA <b>{(a.xn / a.pa).toFixed(3).replace(/^0/, '')}</b> <span className="muted">en {a.pa} turnos</span></> : null}
+          {a.bbe ? <><br />Velocidad de salida <b>{(a.evn / a.bbe).toFixed(1)}</b> mph <span className="muted">en {a.bbe} contactos</span></> : null}
+        </div>
+      </div>
+    ))
+  }
+
+  const toggle = (g: string) => setOff((o) => {
+    const next = o.includes(g) ? o.filter((z) => z !== g) : [...o, g]
+    return next.length >= groups.length ? [] : next
+  })
+
+  /* lectura rápida del mapa */
+  const zonesOnly = ZONE_KEYS.slice(0, 9)
+  const best = zonesOnly.map((k) => ({ k, a: agg[k] })).filter((z) => z.a.pa >= MIN_PA).sort((p, q2) => q2.a.xn / q2.a.pa - p.a.xn / p.a.pa)[0]
+  const worst = zonesOnly.map((k) => ({ k, a: agg[k] })).filter((z) => z.a.sw >= 15).sort((p, q2) => q2.a.wh / q2.a.sw - p.a.wh / p.a.sw)[0]
+  const inZone = zonesOnly.reduce((s, k) => s + agg[k].n, 0)
+
+  const pts = pitches.filter((p) => on(p[0]) && p[1] > X0 && p[1] < X1 && p[2] > Z0 && p[2] < Z1)
+  const plateW = (x(HW) - x(-HW)) * 0.45
+  const plateY = H + 8
+
+  return (
+    <div className="chart" ref={ref}>
+      {title ? <ChartHead title={title} sub={`Vista del catcher · ${total.toLocaleString('en-US')} lanzamientos recibidos`} /> : null}
+      <div className="zonebar">
+        <div className="tabs" role="group" aria-label="Tipo de vista">
+          <button aria-pressed={mode === 'freq'} onClick={() => setMode('freq')}>Bloques</button>
+          <button aria-pressed={mode === 'dots'} onClick={() => setMode('dots')}>Lanzamientos</button>
+        </div>
+        {mode === 'freq' ? (
+          <label className="small muted">Medir{' '}
+            <select className="sel" value={metric} onChange={(e) => setMetric(e.target.value as HMetric)} aria-label="Métrica de los bloques">
+              {HMETRICS.map((m) => <option key={m.k} value={m.k}>{m.label}</option>)}
+            </select>
+          </label>
+        ) : null}
+        <div className="zonechips" role="group" aria-label="Filtrar por tipo de lanzamiento">
+          {groups.map((g) => (
+            <button key={g} className="chip" aria-pressed={on(g)} onClick={() => toggle(g)} title={`Mostrar u ocultar ${GROUP_NAME[g]}`}>
+              <i style={{ background: GROUP_COLOR[g] }} />{GROUP_NAME[g]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="zonewrap">
+        <svg viewBox={`0 0 ${W} ${H + PAD}`} width={W} height={H + PAD} role="img" aria-label={title} style={{ width: W, maxWidth: '100%', height: 'auto', flex: '0 0 auto' }}>
+          {['11', '12', '13', '14'].map((k, i) => {
+            const s = shapes[k]
+            const f = mode === 'freq' ? fill(vals[9 + i]) : null
+            return (
+              <g key={k} onPointerMove={(e) => { setHz(k); zoneTip(e, k) }} onPointerLeave={() => { setHz(null); hide() }}>
+                <rect x={s.x} y={s.y} width={s.w} height={s.h} rx={8} fill={f ?? 'var(--surface-2)'} />
+                {mode === 'freq'
+                  ? <text x={s.lx} y={s.ly + 5} textAnchor="middle" className={f ? 'zlabel' : 'zlabel dim'}>{fmt(vals[9 + i])}</text>
+                  : <text x={s.lx} y={s.ly + 4} textAnchor="middle" opacity={0.55}>{k}</text>}
+              </g>
+            )
+          })}
+          <rect x={x(-HW) - 4} y={y(szTop) - 4} width={x(HW) - x(-HW) + 8} height={y(szBot) - y(szTop) + 8} rx={8} fill="var(--surface)" />
+          {zonesOnly.map((k, i) => {
+            const s = shapes[k]
+            const f = mode === 'freq' ? fill(vals[i]) : null
+            return (
+              <g key={k} onPointerMove={(e) => { setHz(k); zoneTip(e, k) }} onPointerLeave={() => { setHz(null); hide() }}>
+                <rect x={s.x} y={s.y} width={s.w} height={s.h} rx={5} fill={f ?? 'var(--surface)'} stroke={mode === 'dots' ? 'var(--axis)' : 'none'} />
+                {mode === 'freq'
+                  ? <text x={s.lx} y={s.ly + 5} textAnchor="middle" className={f ? 'zlabel' : 'zlabel dim'}>{fmt(vals[i])}</text>
+                  : <text x={s.x + 6} y={s.y + 13} fontSize={10} opacity={0.55}>{k}</text>}
+              </g>
+            )
+          })}
+          {mode === 'dots' ? <rect x={x(-HW)} y={y(szTop)} width={x(HW) - x(-HW)} height={y(szBot) - y(szTop)} fill="none" stroke="var(--ink)" strokeWidth={1.6} pointerEvents="none" /> : null}
+          {hz ? <rect x={shapes[hz].x} y={shapes[hz].y} width={shapes[hz].w} height={shapes[hz].h} rx={hz.length === 1 ? 5 : 8} fill="none" stroke="var(--ink)" strokeWidth={2} pointerEvents="none" /> : null}
+          {mode === 'dots' ? pts.map((p, i) => {
+            const o = HIT_OUTCOME[p[4]] ?? HIT_OUTCOME[0]
+            return (
+              <circle key={i} className="pdot" cx={x(p[1])} cy={y(p[2])} r={p[4] >= 5 ? 4 : 3.2} fill={o.color} fillOpacity={p[4] === 0 ? 0.55 : 0.9} stroke="var(--surface)" strokeWidth={0.6}
+                onPointerMove={(e) => show(e, (
+                  <div>
+                    <b>{p[6] || GROUP_NAME[p[0]]}</b>{p[3] ? <> a <b>{p[3]}</b> mph</> : null}
+                    <br />{o.label}
+                    <br /><span className="muted">Lateral {p[1]} ft · Altura {p[2]} ft{p[5] ? ` · lanzador ${p[5] === 'L' ? 'zurdo' : 'derecho'}` : ''}</span>
+                  </div>
+                ))}
+                onPointerLeave={hide} />
+            )
+          }) : null}
+          <polygon points={[[0, 0], [plateW, 0], [plateW, plateW * 0.3], [plateW / 2, plateW * 0.5], [0, plateW * 0.3]].map(([a, b]) => `${x(0) - plateW / 2 + a},${plateY + b}`).join(' ')} fill="var(--surface)" stroke="var(--ink)" strokeWidth={1.4} />
+        </svg>
+        <div className="zoneside">
+          <div className="statline">
+            <span><b>{pc(inZone, total)}</b> de lo que ve va a la zona (1 a 9)</span>
+          </div>
+          <ul className="zread">
+            {best ? <li>Zona más dañina <b>{best.k}</b> ({ZONE_NAME[best.k]}), xwOBA <b>{(best.a.xn / best.a.pa).toFixed(3).replace(/^0/, '')}</b> en {best.a.pa} turnos.</li> : null}
+            {worst ? <li>Donde más falla <b>{worst.k}</b> ({ZONE_NAME[worst.k]}), whiff <b>{pc(worst.a.wh, worst.a.sw)}</b> en sus swings.</li> : null}
+          </ul>
+          {mode === 'dots' ? <Legend items={HIT_OUTCOME.map((o) => ({ label: o.label, color: o.color }))} /> : null}
+          <div className="small muted" style={{ marginTop: 8 }}>
+            {mode === 'freq'
+              ? `Cada bloque muestra ${metricLabel.toLowerCase()} en esa zona. El rojo marca el valor más alto y el azul el más bajo. Las zonas con muy pocos lanzamientos o turnos quedan vacías. Pasa el cursor por un bloque para ver el desglose.`
+              : `Muestra de ${pts.length} lanzamientos recibidos, coloreados por lo que pasó. Pasa el cursor por un punto o una zona para ver el detalle.`}
+            {' '}La zona de strike usa el promedio propio del bateador ({szBot.toFixed(1)} a {szTop.toFixed(1)} pies).
           </div>
         </div>
       </div>

@@ -10,6 +10,10 @@ export const slash = (s: string | number | null | undefined) => {
 export const headshot = (id: number | null | undefined, w = 213) =>
   id ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${w},q_auto:best/v1/people/${id}/headshot/67/current` : ''
 
+/** Foto cuadrada de cabeza y hombros (versión "silo" de MLB): no se recorta la gorra ni la cara en tamaños pequeños. */
+export const avatar = (id: number | null | undefined, size = 40) =>
+  id ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:silo:current.png/w_${size * 3},q_auto:best/v1/people/${id}/headshot/silo/current` : ''
+
 export const teamLogo = (teamId: number | null | undefined) => (teamId ? `https://www.mlbstatic.com/team-logos/${teamId}.svg` : '')
 
 export const leagueName = (lg: string) => (lg === 'AL' ? 'Liga Americana' : 'Liga Nacional')

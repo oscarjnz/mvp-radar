@@ -51,6 +51,21 @@ def wsum(rows):
     return num / den, xnum / den, int(den)
 
 
+def hitter_outcome(z):
+    """0 bola sin swing, 1 strike cantado, 2 swing y fallo, 3 foul, 4 bola en juego (out), 5 hit, 6 jonron."""
+    d = z.get("description") or ""
+    if d == "hit_into_play":
+        ev = z.get("events") or ""
+        return 6 if ev == "home_run" else 5 if ev in ("single", "double", "triple") else 4
+    if d in WHIFF:
+        return 2
+    if d in ("foul", "foul_bunt", "bunt_foul_tent"):
+        return 3
+    if d in CALLED or d == "automatic_strike":
+        return 1
+    return 0
+
+
 def hitter_detail(rows, profile):
     bbe = [z for z in rows if z["type"] == "X" and fnum(z.get("launch_speed")) is not None]
     evs = [fnum(z["launch_speed"]) for z in bbe]
@@ -85,6 +100,31 @@ def hitter_detail(rows, profile):
         zones[str(zn)] = {"n": len(zr), "swing": r(100 * len(sw) / len(zr)), "whiff": r(100 * len(wh) / len(sw)) if sw else None,
                           "woba": r(w, 3), "xwoba": r(xw, 3)}
     out["zones"] = zones
+    # zona por grupo de lanzamiento con TODOS los lanzamientos vistos
+    zmap = {}
+    for zn in list(range(1, 10)) + [11, 12, 13, 14]:
+        for g in ("FB", "BR", "OS"):
+            zr = [z for z in rows if z.get("zone") == str(zn) and GROUPS.get(z["pitch_type"]) == g]
+            if not zr:
+                continue
+            sw = [z for z in zr if z["description"] in SWING]
+            w, xw, pa = wsum(zr)
+            be = [fnum(z["launch_speed"]) for z in zr if z["type"] == "X" and fnum(z.get("launch_speed")) is not None]
+            zmap.setdefault(str(zn), {})[g] = {
+                "n": len(zr), "sw": len(sw), "wh": sum(1 for z in sw if z["description"] in WHIFF),
+                "cs": sum(1 for z in zr if z["description"] in CALLED), "pa": pa, "woba": r(w, 3), "xwoba": r(xw, 3),
+                "bbe": len(be), "ev": r(float(np.mean(be))) if be else None}
+    out["zoneMap"] = zmap
+    tops = [fnum(z.get("sz_top")) for z in rows if fnum(z.get("sz_top")) is not None]
+    bots = [fnum(z.get("sz_bot")) for z in rows if fnum(z.get("sz_bot")) is not None]
+    out["szTop"] = r(float(np.mean(tops)), 2) if tops else 3.5
+    out["szBot"] = r(float(np.mean(bots)), 2) if bots else 1.5
+    # muestra de lanzamientos: [grupo, lateral, altura, mph, resultado, mano del pitcher, tipo]
+    rng_h = np.random.default_rng(11)
+    seen = [z for z in rows if GROUPS.get(z["pitch_type"]) and fnum(z.get("plate_x")) is not None and fnum(z.get("plate_z")) is not None]
+    idx = rng_h.choice(len(seen), size=min(600, len(seen)), replace=False)
+    out["pitchesSeen"] = [[GROUPS[seen[i]["pitch_type"]], r(fnum(seen[i]["plate_x"]), 2), r(fnum(seen[i]["plate_z"]), 2),
+                           r(fnum(seen[i].get("release_speed")), 1), hitter_outcome(seen[i]), seen[i].get("p_throws") or "", seen[i].get("pitch_name") or ""] for i in idx]
     # disciplina
     inz = [z for z in rows if z.get("zone") and 1 <= int(z["zone"]) <= 9]
     ooz = [z for z in rows if z.get("zone") and int(z["zone"]) >= 11]

@@ -5,7 +5,7 @@ import type { Candidate } from '../lib/types'
 import { fx, headshot, leagueName, signed, slash, teamLogo } from '../lib/format'
 import { ErrorBox, Loading, Section, Tabs, TeamChip, DataTable } from '../components/ui'
 import PercentileBars, { type PctRow } from '../components/PercentileBars'
-import { EvLaScatter, LineChart, MonthBars, MovementPlot, SprayChart, StrikeZoneView, ZoneHeat } from '../components/charts'
+import { EvLaScatter, HitterZoneView, LineChart, MonthBars, MovementPlot, SprayChart, StrikeZoneView } from '../components/charts'
 import { rankVar } from '../components/chartkit'
 import { P, Li, K, Quote, T } from '../components/Term'
 
@@ -75,7 +75,8 @@ function HittingSection({ c, d }: { c: Candidate; d: any }) {
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card"><EvLaScatter bbe={d.bbe} title="Calidad del contacto" /></div>
         <div className="card">
-          <ZoneHeat zones={d.zones} metric="xwoba" title="Mapa de zona, xwOBA por zona" />
+          <h3>Disciplina en el plato</h3>
+          <P className="small muted">Qué tanto tira, qué tanto persigue fuera de la zona y qué tan seguido falla.</P>
           <div className="kv" style={{ marginTop: 14 }}>
             <div><K>Swing</K><div className="v">{d.discipline.swing}%</div></div>
             <div><K>Chase</K><div className="v">{d.discipline.chase}%</div></div>
@@ -84,6 +85,11 @@ function HittingSection({ c, d }: { c: Candidate; d: any }) {
           </div>
         </div>
       </div>
+      {d.zoneMap && d.pitchesSeen ? (
+        <div className="card" style={{ marginTop: 16 }}>
+          <HitterZoneView zoneMap={d.zoneMap} pitches={d.pitchesSeen} szTop={d.szTop} szBot={d.szBot} title="Zona de strike del bateador" />
+        </div>
+      ) : null}
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card">
           <LineChart

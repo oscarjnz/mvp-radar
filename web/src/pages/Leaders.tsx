@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAsync } from '../lib/data'
-import { headshot, teamLogo } from '../lib/format'
+import { avatar, teamLogo } from '../lib/format'
 import { DEFS, fmtStat, ipToNum, rawNum, type Group, type StatDef } from '../lib/statdefs'
 import { ErrorBox, Loading, Tabs } from '../components/ui'
 import { LineChart } from '../components/charts'
@@ -60,6 +60,36 @@ function useSeasons(id: number, group: Group, saber: boolean) {
   return { st, err }
 }
 
+const SIZES = [10, 25, 50, 100]
+const SIZE_KEY = 'mvpradar.leaders.pageSize'
+const readSize = () => {
+  try {
+    const v = Number(window.localStorage.getItem(SIZE_KEY))
+    return SIZES.includes(v) ? v : 25
+  } catch { return 25 }
+}
+const saveSize = (n: number) => { try { window.localStorage.setItem(SIZE_KEY, String(n)) } catch { /* navegador sin almacenamiento */ } }
+
+/** Números de página con puntos suspensivos, como la paginación de mlb.com/stats. */
+function pageList(cur: number, last: number): (number | '…')[] {
+  if (last <= 7) return Array.from({ length: last }, (_, i) => i + 1)
+  const set = new Set([1, cur - 2, cur - 1, cur, cur + 1, cur + 2, last].filter((n) => n >= 1 && n <= last))
+  const out: (number | '…')[] = []
+  let prev = 0
+  ;[...set].sort((a, b) => a - b).forEach((n) => { if (n - prev > 1) out.push('…'); out.push(n); prev = n })
+  return out
+}
+
+function SizeSelect({ size, onChange }: { size: number; onChange: (n: number) => void }) {
+  return (
+    <label className="small muted">Mostrar{' '}
+      <select className="sel" value={size} onChange={(e) => onChange(Number(e.target.value))} aria-label="Jugadores por hoja">
+        {SIZES.map((n) => <option key={n} value={n}>{n} por hoja</option>)}
+      </select>
+    </label>
+  )
+}
+
 function Evolution({ row, group, def, onDef, onClose }: { row: Row; group: Group; def: StatDef; onDef: (k: string) => void; onClose: () => void }) {
   const { st, err } = useSeasons(row.id, group, !!def.saber)
   const defs = DEFS[group]
@@ -84,7 +114,7 @@ function Evolution({ row, group, def, onDef, onClose }: { row: Row; group: Group
   return (
     <div className="card" style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-        <img className="photo" src={headshot(row.id, 168)} alt={row.name} width={64} style={{ width: 64, borderRadius: 12 }} />
+        <img className="avatar" src={avatar(row.id, 64)} alt={row.name} width={64} height={64} style={{ width: 64, height: 64 }} />
         <div style={{ flex: 1, minWidth: 200 }}>
           <div className="eyebrow">Evolución en un departamento</div>
           <h3 style={{ margin: 0 }}>{row.name} <span className="muted small">({row.team})</span></h3>
@@ -134,7 +164,9 @@ export default function Leaders() {
   const [lg, setLg] = useState<'ALL' | 'AL' | 'NL'>('ALL')
   const [q, setQ] = useState('')
   const [qual, setQual] = useState(true)
-  const [limit, setLimit] = useState(25)
+  const [size, setSize] = useState<number>(readSize)
+  const [page, setPage] = useState(1)
+  const leadRef = useRef<HTMLDivElement>(null)
   const [sel, setSel] = useState<Row | null>(null)
   const [selKey, setSelKey] = useState('strikeOuts')
 
@@ -142,12 +174,12 @@ export default function Leaders() {
   const def = defs.find((d) => d.k === key) ?? defs[0]
   const pickGroup = (g: Group) => {
     const k = g === 'hitting' ? 'homeRuns' : 'strikeOuts'
-    setGroup(g); setKey(k); setSelKey(k); setAsc(false); setSel(null); setLimit(25)
+    setGroup(g); setKey(k); setSelKey(k); setAsc(false); setSel(null)
   }
   const sortBy = (d: StatDef) => {
     if (d.k === key) setAsc(!asc)
     else { setKey(d.k); setAsc(!!d.low) }
-    setSelKey(d.k); setLimit(25)
+    setSelKey(d.k)
   }
   const rows = useMemo(() => {
     if (!data) return []
@@ -158,6 +190,14 @@ export default function Leaders() {
       .filter((r) => (lg === 'ALL' || r.lg === lg) && (!needle || r.name.toLowerCase().includes(needle)) && val(r) !== null && (!(def.rate && qual) || qualifies(r)))
       .sort((a, b) => ((val(a) as number) - (val(b) as number)) * (asc ? 1 : -1))
   }, [data, group, def, asc, lg, q, qual])
+
+  useEffect(() => { setPage(1) }, [group, key, asc, lg, q, qual, size])
+  const changeSize = (n: number) => { setSize(n); saveSize(n) }
+  const pages = Math.max(1, Math.ceil(rows.length / size))
+  const cur = Math.min(page, pages)
+  const from = (cur - 1) * size
+  const shown = rows.slice(from, from + size)
+  const goPage = (n: number) => { setPage(n); leadRef.current?.scrollTo({ top: 0 }) }
 
   if (error) return <div className="wrap"><ErrorBox msg={error} /></div>
   if (!data) return <div className="wrap"><Loading h={500} /></div>
@@ -175,22 +215,23 @@ export default function Leaders() {
         <Tabs value={group} onChange={pickGroup} options={[{ id: 'hitting', label: 'Bateo' }, { id: 'pitching', label: 'Pitcheo' }]} />
         <Tabs value={lg} onChange={(v) => setLg(v)} options={[{ id: 'ALL', label: 'Ambas ligas' }, { id: 'AL', label: 'Americana' }, { id: 'NL', label: 'Nacional' }]} />
         <label className="small muted">Ordenar por{' '}
-          <select className="sel" value={key} onChange={(e) => { const d = defs.find((x) => x.k === e.target.value)!; setKey(d.k); setSelKey(d.k); setAsc(!!d.low); setLimit(25) }}>
+          <select className="sel" value={key} onChange={(e) => { const d = defs.find((x) => x.k === e.target.value)!; setKey(d.k); setSelKey(d.k); setAsc(!!d.low) }}>
             {defs.map((d) => <option key={d.k} value={d.k}>{d.abbr} · {d.name}</option>)}
           </select>
         </label>
         <input className="sel" type="search" placeholder="Buscar jugador" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar jugador" />
+        <SizeSelect size={size} onChange={changeSize} />
         {def.rate ? <label className="small muted"><input type="checkbox" checked={qual} onChange={(e) => setQual(e.target.checked)} /> Solo calificados ({need})</label> : null}
       </div>
 
       {sel ? <Evolution row={sel} group={group} def={selDef} onDef={setSelKey} onClose={() => setSel(null)} /> : null}
 
       <div className="card" style={{ padding: 0 }}>
-        <div className="tscroll lead">
+        <div className="tscroll lead" ref={leadRef}>
           <table className="t">
             <thead>
               <tr>
-                <th className="l">#</th><th className="l">Jugador</th>
+                <th className="l">#</th><th className="l">Jugador</th><th className="l">Equipo</th>
                 {defs.map((d) => (
                   <th key={d.k} className={d.k === key ? 'on' : ''} aria-sort={d.k === key ? (asc ? 'ascending' : 'descending') : 'none'}>
                     <button className="th-btn" onClick={() => sortBy(d)} title={`${d.name}. Clic para ordenar`}>{d.abbr}{d.k === key ? (asc ? ' ▲' : ' ▼') : ''}</button>
@@ -199,15 +240,16 @@ export default function Leaders() {
               </tr>
             </thead>
             <tbody>
-              {rows.slice(0, limit).map((r, i) => (
+              {shown.map((r, i) => (
                 <tr key={r.id} className={sel?.id === r.id ? 'sel-row' : ''} onClick={() => open(r)} style={{ cursor: 'pointer' }}>
-                  <td className="l muted">{i + 1}</td>
+                  <td className="l muted idx">{from + i + 1}</td>
                   <td className="l">
                     <button className="lwho" onClick={() => open(r)}>
-                      <img src={headshot(r.id, 60)} alt="" width={28} height={28} loading="lazy" />
-                      <span><b>{r.name}</b><br /><span className="small muted"><img src={teamLogo(r.teamId)} alt="" width={12} height={12} /> {r.team}{r.pos ? ` · ${r.pos}` : ''}</span></span>
+                      <img className="avatar" src={avatar(r.id, 40)} alt="" width={40} height={40} loading="lazy" />
+                      <span className="wname"><b>{r.name}</b>{r.pos ? <span className="pos">{r.pos}</span> : null}</span>
                     </button>
                   </td>
+                  <td className="l team"><img src={teamLogo(r.teamId)} alt="" width={18} height={18} loading="lazy" /> {r.team}</td>
                   {defs.map((d) => <td key={d.k} className={d.k === key ? 'on' : ''}>{fmtStat(d, r[d.k])}</td>)}
                 </tr>
               ))}
@@ -215,10 +257,18 @@ export default function Leaders() {
           </table>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
-        <span className="small muted">Mostrando {Math.min(limit, rows.length)} de {rows.length} jugadores</span>
-        {limit < rows.length ? <button className="btn" onClick={() => setLimit(limit + 25)}>Ver 25 más</button> : null}
-        {limit > 25 ? <button className="btn" onClick={() => setLimit(25)}>Ver menos</button> : null}
+      <div className="pager">
+        <span className="small muted">{rows.length ? `Mostrando ${from + 1} a ${from + shown.length} de ${rows.length} jugadores` : 'Sin jugadores con ese filtro'}</span>
+        {pages > 1 ? (
+          <nav className="pages" aria-label="Paginación">
+            <button className="pg" onClick={() => goPage(cur - 1)} disabled={cur === 1} aria-label="Hoja anterior">‹</button>
+            {pageList(cur, pages).map((n, i) => n === '…'
+              ? <span key={`e${i}`} className="pg gap">…</span>
+              : <button key={n} className="pg" aria-current={n === cur ? 'page' : undefined} aria-label={`Hoja ${n}`} onClick={() => goPage(n)}>{n}</button>)}
+            <button className="pg" onClick={() => goPage(cur + 1)} disabled={cur === pages} aria-label="Hoja siguiente">›</button>
+          </nav>
+        ) : null}
+        <SizeSelect size={size} onChange={changeSize} />
       </div>
     </div>
   )

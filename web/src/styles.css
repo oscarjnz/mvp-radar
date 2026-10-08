@@ -243,8 +243,8 @@ details.tbl summary { cursor: pointer; color: var(--muted); }
 .lead { max-height: 70vh; overflow: auto; }
 .lead table.t th { position: sticky; top: 0; background: var(--surface); z-index: 2; white-space: nowrap; }
 .lead table.t th:nth-child(-n+2), .lead table.t td:nth-child(-n+2) { position: sticky; background: var(--surface); z-index: 1; }
-.lead table.t th:nth-child(1), .lead table.t td:nth-child(1) { left: 0; min-width: 38px; }
-.lead table.t th:nth-child(2), .lead table.t td:nth-child(2) { left: 38px; min-width: 190px; }
+.lead table.t th:nth-child(1), .lead table.t td:nth-child(1) { left: 0; min-width: 44px; }
+.lead table.t th:nth-child(2), .lead table.t td:nth-child(2) { left: 44px; min-width: 220px; }
 .lead table.t th:nth-child(-n+2) { z-index: 3; }
 .lead td.on, .lead th.on { background: var(--surface-2); font-weight: 800; }
 .lead tr.sel-row td { background: var(--surface-2); }
@@ -285,3 +285,29 @@ button.chip[aria-pressed='false'] { opacity: 0.45; }
 .ptable td { padding: 6px 6px 6px 0; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .ptable td:first-child { white-space: nowrap; }
 .ptable i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+/* Líderes, al estilo de la tabla de mlb.com/stats pero con fotos */
+.avatar { border-radius: 50%; background: var(--surface-2); border: 2px solid var(--border); object-fit: cover; object-position: 50% 18%; flex: none; display: block; }
+.lead table.t { font-size: 0.86rem; }
+.lead table.t th { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; padding: 10px 10px 8px; }
+.lead table.t td { padding: 7px 10px; border-bottom: 1px solid var(--grid); height: 56px; }
+.lead table.t td.idx { font-size: 0.8rem; text-align: left; }
+.lead table.t td.team { white-space: nowrap; font-weight: 700; }
+.lead table.t td.team img { vertical-align: -4px; margin-right: 4px; }
+.lead table.t td:nth-child(2) { box-shadow: 1px 0 0 var(--grid); }
+.lwho { gap: 12px; }
+.lwho > .avatar { width: 40px; height: 40px; }
+.wname { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.wname b { font-weight: 700; }
+.wname .pos { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.pager { display: flex; gap: 12px 18px; align-items: center; justify-content: space-between; margin-top: 12px; flex-wrap: wrap; }
+.pages { display: flex; gap: 4px; flex-wrap: wrap; }
+.pg { min-width: 34px; height: 34px; padding: 0 8px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); border-radius: 8px; font: inherit; font-size: 0.85rem; font-weight: 650; cursor: pointer; font-variant-numeric: tabular-nums; }
+.pg:hover:not(:disabled):not([aria-current]) { background: var(--surface-2); }
+.pg[aria-current='page'] { background: var(--accent); color: #fff; border-color: transparent; }
+.pg:disabled { opacity: 0.4; cursor: default; }
+.pg.gap { border: 0; background: none; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); cursor: default; }
+.chart .zlabel.dim { fill: var(--muted); stroke: none; font-weight: 600; }
+.zread { margin: 10px 0 0; padding-left: 18px; font-size: 0.9rem; color: var(--ink-2); }
+.zread li { margin: 4px 0; }
+.zread b { color: var(--ink); font-variant-numeric: tabular-nums; }
