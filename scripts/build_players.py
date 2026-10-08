@@ -158,6 +158,24 @@ def rolling_ops(logs, window=15):
     return series
 
 
+def outcome_of(z):
+    """Codigo corto del resultado del lanzamiento: 0 bola, 1 strike cantado, 2 swing y fallo, 3 foul, 4 en juego, 5 pelotazo."""
+    d = z.get("description") or ""
+    if d in ("ball", "blocked_ball", "automatic_ball", "pitchout"):
+        return 0
+    if d in ("called_strike", "automatic_strike"):
+        return 1
+    if d in WHIFF:
+        return 2
+    if d in ("foul", "foul_bunt", "bunt_foul_tent"):
+        return 3
+    if d == "hit_into_play":
+        return 4
+    if d == "hit_by_pitch":
+        return 5
+    return 0
+
+
 def pitcher_detail(rows, profile):
     out = {"kind": "pitcher"}
     total = len(rows)
@@ -194,13 +212,34 @@ def pitcher_detail(rows, profile):
         idx = rng.choice(len(pr), size=min(70, len(pr)), replace=False)
         mov.extend([[a["code"], r(fnum(pr[i]["pfx_x"]) * 12), r(fnum(pr[i]["pfx_z"]) * 12)] for i in idx])
     out["movement"] = mov
-    # ubicacion por tipo (primeros 3)
+    # ubicacion por tipo (primeros 5): [codigo, lateral, altura, velocidad, resultado, lado del bateador]
     loc = []
-    for a in arsenal[:4]:
+    for a in arsenal[:5]:
         pr = [z for z in rows if z["pitch_name"] == a["name"] and fnum(z.get("plate_x")) is not None and fnum(z.get("plate_z")) is not None]
-        idx = rng.choice(len(pr), size=min(120, len(pr)), replace=False)
-        loc.extend([[a["code"], r(fnum(pr[i]["plate_x"]), 2), r(fnum(pr[i]["plate_z"]), 2)] for i in idx])
+        idx = rng.choice(len(pr), size=min(100, len(pr)), replace=False)
+        loc.extend([[a["code"], r(fnum(pr[i]["plate_x"]), 2), r(fnum(pr[i]["plate_z"]), 2), r(fnum(pr[i].get("release_speed")), 1),
+                     outcome_of(pr[i]), pr[i].get("stand") or ""] for i in idx])
     out["location"] = loc
+    # estadisticas por zona y tipo de lanzamiento con TODOS los lanzamientos (no solo la muestra)
+    zmap = {}
+    for a in arsenal:
+        for zn in list(range(1, 10)) + [11, 12, 13, 14]:
+            zr = [z for z in rows if z["pitch_name"] == a["name"] and z.get("zone") == str(zn)]
+            if not zr:
+                continue
+            sw = [z for z in zr if z["description"] in SWING]
+            wh = [z for z in zr if z["description"] in WHIFF]
+            ve = [fnum(z["release_speed"]) for z in zr if fnum(z.get("release_speed")) is not None]
+            w, _xw, pa = wsum(zr)
+            zmap.setdefault(str(zn), {})[a["code"]] = {
+                "n": len(zr), "v": r(float(np.mean(ve))) if ve else None, "sw": len(sw), "wh": len(wh),
+                "cs": sum(1 for z in zr if z["description"] in CALLED), "pa": pa, "woba": r(w, 3)}
+    out["zoneMap"] = zmap
+    # zona de strike promedio de los bateadores enfrentados (como la dibuja Savant)
+    tops = [fnum(z.get("sz_top")) for z in rows if fnum(z.get("sz_top")) is not None]
+    bots = [fnum(z.get("sz_bot")) for z in rows if fnum(z.get("sz_bot")) is not None]
+    out["szTop"] = r(float(np.mean(tops)), 2) if tops else 3.5
+    out["szBot"] = r(float(np.mean(bots)), 2) if bots else 1.5
     # tendencia de velocidad de la recta
     main = arsenal[0]["code"] if arsenal else None
     fb = [z for z in rows if z["pitch_type"] in ("FF", "SI") and fnum(z.get("release_speed")) is not None]

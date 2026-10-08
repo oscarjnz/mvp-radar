@@ -268,3 +268,20 @@ details.tbl summary { cursor: pointer; color: var(--muted); }
 .quote .qsep::before { content: '\00B7'; margin: 0 8px; color: var(--muted); }
 .quote figcaption a::before { content: '\00B7'; display: inline-block; margin: 0 8px; color: var(--muted); font-style: normal; }
 @media (max-width: 560px) { .quote { padding: 20px 16px 14px 16px; } .quote::before { position: static; display: block; height: 2rem; } .quote .qtext { font-size: 1.08rem; } }
+
+/* Ubicación de lanzamientos (zona de strike) */
+.zonebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 8px 0 12px; }
+.zonechips { display: flex; flex-wrap: wrap; gap: 6px; }
+button.chip { cursor: pointer; font-family: inherit; }
+button.chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+button.chip[aria-pressed='false'] { opacity: 0.45; }
+.zonewrap { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: flex-start; justify-content: center; }
+.zoneside { flex: 1 1 260px; min-width: 240px; max-width: 420px; }
+.chart .zlabel { fill: #fff; font-weight: 800; font-size: 13px; paint-order: stroke; stroke: rgba(0,0,0,0.3); stroke-width: 2px; pointer-events: none; }
+.chart .pdot { cursor: crosshair; }
+.chart .pdot:hover { stroke: var(--ink); stroke-width: 1.6; }
+.ptable { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.ptable th { text-align: left; font-weight: 650; color: var(--muted); font-size: 0.75rem; padding: 0 6px 6px 0; border-bottom: 1px solid var(--border); }
+.ptable td { padding: 6px 6px 6px 0; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.ptable td:first-child { white-space: nowrap; }
+.ptable i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }

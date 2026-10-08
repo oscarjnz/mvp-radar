@@ -140,7 +140,7 @@ function PitchingSection({ c, d }: { c: Candidate; d: any }) {
         </div>
         <div className="card"><MovementPlot movement={d.movement} arsenal={d.arsenal} title="Movimiento de cada lanzamiento" /></div>
       </div>
-      {d.location?.length ? <div className="card" style={{ marginTop: 16 }}><StrikeZoneView location={d.location} arsenal={d.arsenal} title="Ubicación de cada lanzamiento" /></div> : null}
+      {d.location?.length ? <div className="card" style={{ marginTop: 16 }}><StrikeZoneView location={d.location} arsenal={d.arsenal} zoneMap={d.zoneMap} szTop={d.szTop} szBot={d.szBot} title="Ubicación de cada lanzamiento" /></div> : null}
       <div className="card" style={{ marginTop: 16 }}>
         <h3>Arsenal</h3>
         <DataTable head={['Lanzamiento', 'Uso %', 'Vel.', 'Giro', 'Mov. H', 'Mov. V', 'Whiff %', 'CSW %', 'Putaway %', 'wOBA', 'xwOBA']}
