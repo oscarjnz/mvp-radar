@@ -10,7 +10,7 @@ export function Loading({ h = 160 }: { h?: number }) {
 }
 
 export function ErrorBox({ msg }: { msg: string }) {
-  return <div className="err" role="alert">No se pudieron cargar los datos: {msg}</div>
+  return <div className="err" role="alert">No se pudieron cargar los datos ({msg})</div>
 }
 
 export function Section({ title, eyebrow, children, lede }: { title?: string; eyebrow?: string; lede?: ReactNode; children: ReactNode }) {
@@ -88,5 +88,56 @@ export function DataTable({ head, rows, caption, left = [] }: { head: string[]; 
         <tbody>{rows.map((r, i) => <tr key={i}>{r.map((cell, j) => <td key={j} className={j === 0 || left.includes(j) ? 'l' : ''}>{cell}</td>)}</tr>)}</tbody>
       </table>
     </div>
+  )
+}
+
+/** Foto del jugador. Si hay id, es un enlace a su perfil. */
+export function Face({ id, name, width = 96, color = 'var(--accent)' }: { id?: number | null; name: string; width?: number; color?: string }) {
+  const img = (
+    <img className="photo" src={headshot(id, width * 2)} alt={name} width={width} style={{ width, border: `3px solid ${color}`, borderRadius: 14, background: 'var(--surface-2)' }} />
+  )
+  if (!id) return img
+  return (
+    <Link to={`/jugador/${id}`} className="face" aria-label={`Ver el perfil de ${name}`} title={`Ver el perfil de ${name}`}>
+      {img}
+    </Link>
+  )
+}
+
+/** Nombre del jugador como enlace a su perfil cuando se conoce el id. */
+export function NameLink({ id, name }: { id?: number | null; name: string }) {
+  return id ? <Link to={`/jugador/${id}`}>{name}</Link> : <>{name}</>
+}
+
+export interface QuoteData {
+  text: string
+  es?: string
+  author: string
+  outlet: string
+  title: string
+  date: string
+  url: string
+}
+
+export function QuoteCard({ q }: { q: QuoteData }) {
+  return (
+    <figure className="quote">
+      <blockquote>
+        <p lang={q.es ? 'en' : 'es'}>«{q.text}»</p>
+        {q.es ? <p className="small muted">Traducción propia. {q.es}.</p> : null}
+      </blockquote>
+      <figcaption>
+        <b>{q.author}</b>, {q.outlet}. <a href={q.url} target="_blank" rel="noreferrer">{q.title}</a>. {q.date}.
+      </figcaption>
+    </figure>
+  )
+}
+
+export function Callout({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <aside className="callout" role="note">
+      <b>{title}</b>
+      <P>{children}</P>
+    </aside>
   )
 }

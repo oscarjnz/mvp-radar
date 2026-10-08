@@ -4,24 +4,13 @@ import { useCandidates } from '../lib/data'
 import type { Candidate, League } from '../lib/types'
 import { leagueName, slash } from '../lib/format'
 import { CRITERIA, PRESETS, rankPool, type Weights } from '../lib/scoring'
-import { DataTable, ErrorBox, Loading, PlayerCard, Section, Tabs } from '../components/ui'
+import { DataTable, ErrorBox, Face, Loading, NameLink, PlayerCard, Section, Tabs } from '../components/ui'
 import { ValueScatter, WarDumbbell, WarParts, LabBars } from '../components/racecharts'
 import { P, Rich } from '../components/Term'
 
 const PANEL: Record<League, string[]> = {
   AL: ['Yordan Alvarez', 'Junior Caminero', 'Bobby Witt Jr.', 'Cam Schlittler', 'Ben Rice'],
   NL: ['Pete Crow-Armstrong', 'Shohei Ohtani', 'Jacob Misiorowski', 'Elly De La Cruz', 'Kyle Schwarber'],
-}
-
-const BUBBLE_WHY: Record<string, string> = {
-  'Ben Rice': 'Producción de poder en un equipo de playoffs, pero su WAR queda lejos de los cinco de arriba.',
-  'Pete Alonso': 'Poder y empujadas de líder, con un equipo que no llegó a octubre y un corrido de bases negativo.',
-  'Randy Arozarena': 'Muy buen bate y buena marca de valor, pero juega en un equipo sin playoffs y su defensa le resta.',
-  'Dylan Cease': 'Segundo mejor lanzador de la liga por WAR, detrás de Schlittler, con un equipo sin playoffs.',
-  'Cristopher Sánchez': 'Su bWAR es el más alto de la Nacional después de Crow-Armstrong, pero su fWAR es mucho menor: dos fuentes que no se ponen de acuerdo.',
-  'Chris Sale': 'Efectividad de élite, pero en menos entradas que sus rivales, y con otros lanzadores por delante en la conversación.',
-  'Fernando Tatis Jr.': 'Poder y robos en un equipo de playoffs; su bWAR es notablemente menor que su fWAR.',
-  'Kyle Schwarber': 'Empató el liderato de jonrones, pero su defensa y su corrido le restan casi todo el valor que da el bate.',
 }
 
 export default function Race() {
@@ -48,8 +37,8 @@ export default function Race() {
   return (
     <div className="wrap">
       <div className="eyebrow">Carrera 2026</div>
-      <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Top 5 al MVP: {leagueName(lg)}</h1>
-      <P className="lede">Temporada regular cerrada el 27 de septiembre. Orden basado en WAR de dos fuentes, producción, impacto en juegos, equipo y disponibilidad. Cada tarjeta lleva a su análisis completo.</P>
+      <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Top 5 al MVP de la {leagueName(lg)}</h1>
+      <P className="lede">Temporada regular cerrada el 27 de septiembre. Orden basado en WAR de dos fuentes, producción, impacto en juegos, equipo y disponibilidad. La foto y el nombre de cada jugador llevan a su perfil completo.</P>
       <Tabs value={lg} onChange={(v) => setSp({ liga: v })} options={[{ id: 'AL', label: 'Liga Americana' }, { id: 'NL', label: 'Liga Nacional' }]} />
 
       <div className="grid" style={{ marginTop: 20 }}>
@@ -61,7 +50,7 @@ export default function Race() {
         ))}
       </div>
 
-      <Section title="Cómo se comparan" eyebrow="Gráficos" lede="Cuatro formas de mirar lo mismo. La primera enseña que las dos grandes fuentes de WAR no siempre cuentan la misma historia.">
+      <Section title="Cómo se comparan" eyebrow="Comparación" lede="Tres gráficos para comparar a los candidatos. El primero muestra que las dos grandes fuentes de WAR no siempre cuentan la misma historia.">
         <div className="grid g2">
           <div className="card"><WarDumbbell cands={top} title="WAR por fuente" /></div>
           <div className="card"><ValueScatter cands={pool} title="Valor frente a equipo" /></div>
@@ -69,7 +58,7 @@ export default function Race() {
         <div className="card" style={{ marginTop: 16 }}><WarParts cands={top} title="De dónde sale el valor de los bateadores" /></div>
       </Section>
 
-      <Section title="Tabla completa" eyebrow="Números">
+      <Section title="Tabla completa" eyebrow="Estadísticas">
         <div className="card">
           <DataTable
             head={['Jugador', 'Eq.', 'Récord', 'fWAR', 'bWAR', 'wRC+', 'ERA', 'HR', 'SB', 'WPA', 'RE24']}
@@ -81,7 +70,7 @@ export default function Race() {
         </div>
       </Section>
 
-      <Section title="Arma tu propia boleta" eyebrow="Laboratorio" lede="Los votantes no usan la misma receta. Mueve los pesos y mira cómo cambia el orden. Los puntajes van de 0 a 100 dentro de este grupo de candidatos.">
+      <Section title="Laboratorio de boletas" eyebrow="Simulador" lede="Los votantes no usan la misma receta. Mueve los pesos y observa cómo cambia el orden. Los puntajes van de 0 a 100 dentro de este grupo de candidatos.">
         <div className="card">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }} role="group" aria-label="Presets de pesos">
             {PRESETS.map((p) => (
@@ -102,17 +91,22 @@ export default function Race() {
 
       <Section title="Comparado con la encuesta de MLB.com" eyebrow="Contraste">
         <div className="card">
-          <P>El panel de MLB.com (encuesta de septiembre) puso este orden para {leagueName(lg)}: <b>{PANEL[lg].join(' · ')}</b>. El análisis de aquí difiere sobre todo en cómo trata a los lanzadores y a quien tiene mucho WAR en un equipo sin playoffs.</P>
+          <P>El panel de MLB.com, en su encuesta de septiembre, ordenó así a los candidatos de la {leagueName(lg)}, <b>{PANEL[lg].join(' · ')}</b>. El análisis de esta página difiere sobre todo en cómo trata a los lanzadores y a quien suma mucho WAR en un equipo sin playoffs.</P>
         </div>
       </Section>
 
-      <Section title="En la burbuja" eyebrow="Fuera del top 5, pero evaluados">
+      <Section title="Otros candidatos considerados" eyebrow="Fuera del top 5">
         <div className="grid g2">
           {bubble.map((c) => (
             <div className="card" key={c.id}>
-              <h3><Link to={`/jugador/${c.id}`}>{c.name}</Link> <span className="muted small">({c.team})</span></h3>
-              <div className="statline"><span><b>{c.war.f}</b> fWAR</span><span><b>{c.war.b}</b> bWAR</span>{c.hit ? <><span><b>{c.hit.wrcPlus}</b> wRC+</span><span><b>{c.hit.hr}</b> HR</span><span><b>{slash(c.hit.ops)}</b> OPS</span></> : null}{c.pit ? <><span><b>{c.pit.era}</b> ERA</span><span><b>{c.pit.so}</b> K</span></> : null}</div>
-              <P style={{ marginTop: 8 }}>{BUBBLE_WHY[c.name]}</P>
+              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 14, alignItems: 'center' }}>
+                <Face id={c.id} name={c.name} width={72} color="var(--muted)" />
+                <div>
+                  <h3 style={{ margin: 0 }}><NameLink id={c.id} name={c.name} /> <span className="muted small">({c.team})</span></h3>
+                  <div className="statline"><span><b>{c.war.f}</b> fWAR</span><span><b>{c.war.b}</b> bWAR</span>{c.hit ? <><span><b>{c.hit.wrcPlus}</b> wRC+</span><span><b>{c.hit.hr}</b> HR</span><span><b>{slash(c.hit.ops)}</b> OPS</span></> : null}{c.pit ? <><span><b>{c.pit.era}</b> ERA</span><span><b>{c.pit.so}</b> K</span></> : null}</div>
+                </div>
+              </div>
+              <P style={{ marginTop: 10 }}>{c.narrative.verdict}</P>
             </div>
           ))}
         </div>

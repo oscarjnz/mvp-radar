@@ -3,8 +3,8 @@ y extrae las tablas de votacion MVP (AL y NL) a data/mvp_history_raw.json.
 
 Las paginas se descargan con firecrawl_scrape (formato rawHtml); el resultado grande queda en
 ~/.claude/projects/<proyecto>/<sesion>/tool-results/*.txt. Este script busca esos archivos,
-detecta el ano por el <title> y guarda el HTML en data/raw/bbref_awards_<ano>.html.
-Tambien procesa los HTML ya guardados en data/raw si no hay archivos nuevos.
+detecta el año por el <title> y guarda el HTML en data/raw/bbref_awards_<año>.html.
+También procesa los HTML ya guardados en data/raw si no hay archivos nuevos.
 """
 import glob
 import json
@@ -122,7 +122,7 @@ def parse_year(year):
 
 def main():
     found = harvest()
-    print("anos encontrados en tool-results:", sorted(found))
+    print("años encontrados en tool-results:", sorted(found))
     years = sorted(
         int(re.search(r"(\d{4})", f).group(1))
         for f in os.listdir(RAW)

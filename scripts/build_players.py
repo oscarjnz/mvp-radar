@@ -318,7 +318,7 @@ def main():
         summary["narrative"] = narrative_for(summary)
         result[lg]["top5" if is_top else "bubble"].append(summary)
 
-        if is_top:
+        if True:
             detail = {"id": pid}
             if "hitter" in roles:
                 detail["hitting"] = hitter_detail(read_csv(os.path.join(RAW, f"statcast_{pid}_bat.csv")), profile)
@@ -330,7 +330,7 @@ def main():
     # metadatos de ligas y standings
     stand = load_standings(teams)
     payload = {
-        "season": 2026, "asOf": "2026-09-27", "status": "Temporada regular finalizada. Postemporada en curso; los premios BBWAA se anuncian en noviembre.",
+        "season": 2026, "asOf": "2026-09-27", "status": "La temporada regular terminó el 27 de septiembre. La postemporada sigue en curso y los premios de la BBWAA se anunciarán en noviembre.",
         "leagues": result,
         "teams": {str(t["id"]): {"abbr": t["abbr"], "name": t["full"], "lg": t["lg"], **stand.get(t["id"], {})} for t in teams.values()},
     }

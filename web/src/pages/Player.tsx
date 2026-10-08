@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useCandidates, usePlayer } from '../lib/data'
+import { useCandidates, usePlayer, useProfiles, type Profile } from '../lib/data'
 import type { Candidate } from '../lib/types'
-import { fx, headshot, leagueName, signed, slash } from '../lib/format'
+import { fx, headshot, leagueName, signed, slash, teamLogo } from '../lib/format'
 import { ErrorBox, Loading, Section, Tabs, TeamChip, DataTable } from '../components/ui'
 import PercentileBars, { type PctRow } from '../components/PercentileBars'
 import { EvLaScatter, LineChart, MonthBars, MovementPlot, SprayChart, ZoneHeat } from '../components/charts'
@@ -64,7 +64,7 @@ function HittingSection({ c, d }: { c: Candidate; d: any }) {
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card">
           <h3>Percentiles de Baseball Savant <T k="percentil">(¿qué es?)</T></h3>
-          <P className="small muted">Compara a {c.name.split(' ').slice(-1)[0]} con el resto de la liga: el rojo es élite.</P>
+          <P className="small muted">Compara a {c.name.split(' ').slice(-1)[0]} con el resto de la liga. El rojo indica élite.</P>
           <PercentileBars rows={hitterRows(c, d)} title={`Percentiles de ${c.name}`} />
         </div>
         <div className="card">
@@ -75,7 +75,7 @@ function HittingSection({ c, d }: { c: Candidate; d: any }) {
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card"><EvLaScatter bbe={d.bbe} title="Calidad del contacto" /></div>
         <div className="card">
-          <ZoneHeat zones={d.zones} metric="xwoba" title="Mapa de zona: xwOBA por zona" />
+          <ZoneHeat zones={d.zones} metric="xwoba" title="Mapa de zona, xwOBA por zona" />
           <div className="kv" style={{ marginTop: 14 }}>
             <div><K>Swing</K><div className="v">{d.discipline.swing}%</div></div>
             <div><K>Chase</K><div className="v">{d.discipline.chase}%</div></div>
@@ -121,7 +121,7 @@ function HittingSection({ c, d }: { c: Candidate; d: any }) {
             <div><K>Barrel %</K><div className="v">{d.ev.barrel}%</div></div>
             <div><K>Sweet spot %</K><div className="v">{d.ev.sweetSpot}%</div></div>
           </div>
-          <P className="small muted" style={{ marginTop: 12 }}>Valor del WAR: bateo {signed(h.bat)}, defensa {signed(h.fld)}, corrido {signed(h.bsr)}, posición {signed(h.posAdj)} carreras.</P>
+          <P className="small muted" style={{ marginTop: 12 }}>El WAR incluye bateo {signed(h.bat)}, defensa {signed(h.fld)}, corrido {signed(h.bsr)}, posición {signed(h.posAdj)} carreras.</P>
         </div>
       </div>
     </>
@@ -135,7 +135,7 @@ function PitchingSection({ c, d }: { c: Candidate; d: any }) {
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card">
           <h3>Percentiles de Baseball Savant <T k="percentil">(¿qué es?)</T></h3>
-          <P className="small muted">En lanzadores, el rojo siempre es mejor: menos daño y más ponches.</P>
+          <P className="small muted">En lanzadores, el rojo siempre es mejor, con menos daño y más ponches.</P>
           <PercentileBars rows={pitcherRows(c, d)} title={`Percentiles de ${c.name}`} />
         </div>
         <div className="card"><MovementPlot movement={d.movement} arsenal={d.arsenal} title="Movimiento de cada lanzamiento" /></div>
@@ -144,7 +144,7 @@ function PitchingSection({ c, d }: { c: Candidate; d: any }) {
         <h3>Arsenal</h3>
         <DataTable head={['Lanzamiento', 'Uso %', 'Vel.', 'Giro', 'Mov. H', 'Mov. V', 'Whiff %', 'CSW %', 'Putaway %', 'wOBA', 'xwOBA']}
           rows={d.arsenal.map((a: any) => [a.name, a.usage, a.velo, a.spin, a.hmov, a.vmov, a.whiff, a.csw, a.putaway, pct3(a.woba), pct3(a.xwoba)])} />
-        <P className="small muted" style={{ marginTop: 8 }}>Movimientos en pulgadas, vista del catcher. CSW: strikes cantados más swings fallados. Putaway: ponches por lanzamiento con dos strikes.</P>
+        <P className="small muted" style={{ marginTop: 8 }}>Los movimientos van en pulgadas y desde la vista del catcher. El CSW suma strikes cantados y swings fallados, y el Putaway mide ponches por lanzamiento con dos strikes.</P>
       </div>
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card">
@@ -171,9 +171,83 @@ function PitchingSection({ c, d }: { c: Candidate; d: any }) {
   )
 }
 
+const joinEs = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} y ${xs[xs.length - 1]}`)
+
+function AwardsList({ awards }: { awards: Record<string, string[]> }) {
+  const entries = Object.entries(awards)
+  if (!entries.length) return null
+  return (
+    <ul className="clean">
+      {entries.map(([k, v]) => <li key={k}>{k} en {joinEs(v)}</li>)}
+    </ul>
+  )
+}
+
+function VotingHistory({ profile }: { profile: Profile }) {
+  const rows = profile.seasons.map((x: any) => [
+    <Link key={x.year + x.lg} to={`/historial?anio=${x.year}&liga=${x.lg}`}>{x.year}{x.year === 2020 ? ' *' : ''}</Link>,
+    x.lg === 'AL' ? 'Americana' : 'Nacional',
+    `${x.rank}.º${x.won ? ' (ganó)' : ''}`,
+    `${x.share}%`, x.first, x.war,
+    x.w === null ? x.team : `${x.team} ${x.w}-${x.l}${x.playoffs ? ' ★' : ''}`,
+    x.pit && x.role === 'pitcher' ? `${x.pit.era} ERA, ${x.pit.so} K en ${x.pit.ip} IP` : x.bat ? `${slash(x.bat.avg)}/${slash(x.bat.obp)}/${slash(x.bat.slg)}, ${x.bat.hr} HR` : '-',
+  ])
+  return (
+    <>
+      <DataTable head={['Año', 'Liga', 'Puesto', 'Voto', '1.er lugar', 'bWAR', 'Equipo', 'Temporada']} rows={rows} left={[1, 7]} caption="Votaciones al MVP" />
+      <P className="small muted" style={{ marginTop: 8 }}>★ equipo en playoffs. * temporada recortada de 2020, de 60 juegos. Solo aparecen las votaciones de 2016 a 2025 en las que recibió votos.</P>
+    </>
+  )
+}
+
+function ProfileView({ p }: { p: Profile }) {
+  const wins = p.seasons.filter((x: any) => x.won).length
+  return (
+    <div className="wrap" style={{ ['--rank-color' as any]: 'var(--accent)' } as CSSProperties}>
+      <P className="small"><Link to="/historial">← Historial de MVP</Link></P>
+      <div className="card">
+        <div className="player-head">
+          <img className="photo" src={headshot(p.id, 340)} alt={p.name} width={170} />
+          <div>
+            <div className="eyebrow">Perfil de jugador</div>
+            <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)' }}>{p.name}</h1>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {p.teamName ? <span className="chip"><img src={teamLogo(p.teamId)} alt="" width={16} height={16} /> {p.teamName}</span> : <span className="chip">Sin equipo en la actualidad</span>}
+              <span className="chip">{p.pos === 'TWP' ? 'Dos vías' : p.pos} · {p.bats}/{p.throws}</span>
+              <span className="chip">{p.age} años · {p.height} · {p.weight} lb</span>
+              <span className="chip">{p.city}, {p.country}</span>
+              {p.debut ? <span className="chip">Debut en {p.debut.slice(0, 4)}</span> : null}
+              {p.number ? <span className="chip">Número {p.number}</span> : null}
+            </div>
+            <div className="kv">
+              <div><K>MVP ganados</K><div className="v">{(p.awards['MVP'] || []).length}</div></div>
+              <div><K>Votaciones 2016-2025</K><div className="v">{p.seasons.length}</div></div>
+              <div><K>Votaciones ganadas</K><div className="v">{wins}</div></div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
+              <a className="btn" href={p.links.mlb} target="_blank" rel="noreferrer">Perfil en MLB.com</a>
+              <a className="btn" href={p.links.savant} target="_blank" rel="noreferrer">Baseball Savant</a>
+              <a className="btn" href={p.links.bbref} target="_blank" rel="noreferrer">Baseball Reference</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Section title="Trayectoria en la votación al MVP" eyebrow="2016 a 2025">
+        <div className="card"><VotingHistory profile={p} /></div>
+      </Section>
+      {Object.keys(p.awards).length ? (
+        <Section title="Premios y reconocimientos" eyebrow="Según MLB.com">
+          <div className="card"><AwardsList awards={p.awards} /></div>
+        </Section>
+      ) : null}
+    </div>
+  )
+}
+
 export default function Player() {
   const { id } = useParams()
   const cands = useCandidates()
+  const profiles = useProfiles()
   const detail = usePlayer(id || null)
   const [tab, setTab] = useState<'hit' | 'pit'>('hit')
   const cand = useMemo(() => {
@@ -186,9 +260,13 @@ export default function Player() {
     return null
   }, [cands.data, id])
 
-  if (cands.error) return <ErrorBox msg={cands.error} />
-  if (!cands.data) return <Loading h={400} />
-  if (!cand) return <div className="wrap"><h2>Jugador no encontrado</h2><Link to="/carrera">Volver a la carrera</Link></div>
+  if (cands.error) return <div className="wrap"><ErrorBox msg={cands.error} /></div>
+  if (!cands.data || (!cand && !profiles.data && !profiles.error)) return <div className="wrap"><Loading h={400} /></div>
+  const profile = profiles.data && id ? profiles.data[id] : undefined
+  if (!cand) {
+    if (profile) return <ProfileView p={profile} />
+    return <div className="wrap"><h2>Jugador no encontrado</h2><Link to="/carrera">Volver a la carrera</Link></div>
+  }
   const c = cand
   const style = { ['--rank-color' as any]: c.top5 ? rankVar(c.rank) : 'var(--muted)' } as CSSProperties
   const b = c.bio
@@ -202,7 +280,7 @@ export default function Player() {
         <div className="player-head">
           <img className="photo" src={headshot(c.id, 340)} alt={c.name} width={170} />
           <div>
-            <div className="eyebrow">{leagueName(c.lg)} · {c.top5 ? `Puesto ${c.rank} del análisis` : 'En la burbuja'}</div>
+            <div className="eyebrow">{leagueName(c.lg)} · {c.top5 ? `Puesto ${c.rank} del análisis` : 'Otros candidatos considerados'}</div>
             <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)' }}>{c.name}</h1>
             <P className="lede" style={{ marginBottom: 10 }}>{c.narrative.tagline}</P>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -210,6 +288,8 @@ export default function Player() {
               <span className="chip">{b.pos === 'TWP' ? 'Dos vías' : b.pos} · {b.bats}/{b.throws}</span>
               <span className="chip">{b.age} años · {b.height} · {b.weight} lb</span>
               <span className="chip">{b.city}, {b.country}</span>
+              {b.debut ? <span className="chip">Debut en {b.debut.slice(0, 4)}</span> : null}
+              {b.number ? <span className="chip">Número {b.number}</span> : null}
             </div>
             <div className="kv">
               <div><K>fWAR</K><div className="v">{c.war.f}</div></div>
@@ -230,32 +310,30 @@ export default function Player() {
         </div>
       </div>
 
-      {c.top5 ? (
-        <Section title="El caso por qué sí y por qué no" eyebrow="Argumentos">
-          <div className="grid g2">
-            <div className="card"><h3>A favor</h3><ul className="clean pros">{c.narrative.pros.map((t, i) => <Li key={i}>{t}</Li>)}</ul></div>
-            <div className="card"><h3>En contra</h3><ul className="clean cons">{c.narrative.cons.map((t, i) => <Li key={i}>{t}</Li>)}</ul></div>
-          </div>
-          <Quote style={{ marginTop: 16 }}>{c.narrative.verdict} <b>{c.narrative.outlook}</b></Quote>
-          {b.awards.length ? <P className="small muted" style={{ marginTop: 12 }}>Reconocimientos previos (MLB.com): {b.awards.join(' · ')}.</P> : null}
+      <Section title="Argumentos a favor y en contra" eyebrow="Su caso al MVP">
+        <div className="grid g2">
+          <div className="card"><h3>A favor</h3><ul className="clean pros">{c.narrative.pros.map((t, i) => <Li key={i}>{t}</Li>)}</ul></div>
+          <div className="card"><h3>En contra</h3>{c.narrative.cons.length ? <ul className="clean cons">{c.narrative.cons.map((t, i) => <Li key={i}>{t}</Li>)}</ul> : <P className="muted">No hay objeciones relevantes más allá de su posición en el análisis.</P>}</div>
+        </div>
+        <Quote style={{ marginTop: 16 }}>{c.narrative.verdict} <b>{c.narrative.outlook}</b></Quote>
+        {b.awards.length ? <P className="small muted" style={{ marginTop: 12 }}>Reconocimientos previos según MLB.com, {b.awards.join(', ')}.</P> : null}
+      </Section>
+
+      {profile && profile.seasons.length ? (
+        <Section title="Trayectoria en la votación al MVP" eyebrow="2016 a 2025">
+          <div className="card"><VotingHistory profile={profile} /></div>
         </Section>
       ) : null}
 
-      {c.top5 ? (
-        <Section title="Qué dicen los datos" eyebrow="Statcast y Baseball Savant">
-          {twoway ? <Tabs value={tab} onChange={setTab} options={[{ id: 'hit', label: 'Como bateador' }, { id: 'pit', label: 'Como lanzador' }]} /> : null}
-          {detail.error ? <ErrorBox msg={detail.error} /> : !detail.data ? <Loading h={420} /> : activeTab === 'hit' && detail.data.hitting ? (
-            <HittingSection c={c} d={detail.data.hitting} />
-          ) : detail.data.pitching ? (
-            <PitchingSection c={c} d={detail.data.pitching} />
-          ) : null}
-        </Section>
-      ) : (
-        <Section title="Estadísticas" eyebrow="Resumen">
-          <div className="card"><P>{c.narrative.tagline} Este jugador se evaluó pero quedó fuera del top 5; por eso no tiene análisis de Statcast en detalle. Consulta su perfil en las fuentes de arriba.</P></div>
-        </Section>
-      )}
-      <P className="small muted" style={{ marginTop: 28 }}>Datos al {cands.data.asOf} (fin de temporada regular). Fuentes: MLB Stats API, Baseball Savant, Baseball Reference, FanGraphs.</P>
+      <Section title="Qué dicen los datos" eyebrow="Statcast y Baseball Savant">
+        {twoway ? <Tabs value={tab} onChange={setTab} options={[{ id: 'hit', label: 'Como bateador' }, { id: 'pit', label: 'Como lanzador' }]} /> : null}
+        {detail.error ? <ErrorBox msg={detail.error} /> : !detail.data ? <Loading h={420} /> : activeTab === 'hit' && detail.data.hitting ? (
+          <HittingSection c={c} d={detail.data.hitting} />
+        ) : detail.data.pitching ? (
+          <PitchingSection c={c} d={detail.data.pitching} />
+        ) : null}
+      </Section>
+      <P className="small muted" style={{ marginTop: 28 }}>Datos al {cands.data.asOf}, cierre de la temporada regular. Fuentes, MLB Stats API, Baseball Savant, Baseball Reference y FanGraphs.</P>
     </div>
   )
 }

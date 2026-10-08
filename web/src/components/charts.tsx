@@ -40,7 +40,7 @@ export function LineChart({
         <b>{xLabel ? `${xLabel} ${xFmt(px)}` : xFmt(px)}</b>
         {series.map((s) => {
           const pt = s.points.find((p) => p.x === px)
-          return pt ? <div key={s.id}><span style={{ color: s.color }}>●</span> {s.label}: <b>{yFmt(pt.y)}</b></div> : null
+          return pt ? <div key={s.id}><span style={{ color: s.color }}>●</span> {s.label} <b>{yFmt(pt.y)}</b></div> : null
         })}
         {tipExtra ? <div className="muted">{tipExtra(px)}</div> : null}
       </div>
@@ -107,7 +107,7 @@ export function SprayChart({ bbe, title }: { bbe: any[]; title?: string }) {
         {pts.map((b, i) => (
           <circle
             key={i} cx={sx(b[0])} cy={sy(b[1])} r={b[4] >= 1 ? 4 : 3} fill={resColor[b[4]]} stroke="var(--surface)" strokeWidth={1.2} opacity={b[4] === 0 ? 0.4 : 1}
-            onPointerMove={(e) => show(e, <div><b>{RES[b[4]]}</b><br />Velocidad de salida: <b>{b[2]} mph</b><br />Ángulo: <b>{b[3]}°</b><br />xwOBA del contacto: <b>{b[5]}</b></div>)}
+            onPointerMove={(e) => show(e, <div><b>{RES[b[4]]}</b><br />Velocidad de salida <b>{b[2]} mph</b><br />Ángulo <b>{b[3]}°</b><br />xwOBA del contacto <b>{b[5]}</b></div>)}
             onPointerLeave={hide}
           />
         ))}
@@ -152,7 +152,7 @@ export function EvLaScatter({ bbe, title }: { bbe: any[]; title?: string }) {
         {bbe.map((b, i) => (
           <circle
             key={i} cx={x(b[3])} cy={y(b[2])} r={3} fill={resColor[b[4]]} opacity={b[4] === 0 ? 0.4 : 0.95} stroke="var(--surface)" strokeWidth={0.8}
-            onPointerMove={(e) => show(e, <div><b>{RES[b[4]]}</b><br />{b[2]} mph a {b[3]}°<br />xwOBA: <b>{b[5]}</b></div>)} onPointerLeave={hide}
+            onPointerMove={(e) => show(e, <div><b>{RES[b[4]]}</b><br />{b[2]} mph a {b[3]}°<br />xwOBA <b>{b[5]}</b></div>)} onPointerLeave={hide}
           />
         ))}
       </svg>
@@ -186,7 +186,7 @@ export function ZoneHeat({ zones, metric = 'xwoba', title, good = 'high' }: { zo
           return (
             <div
               role="cell" key={k}
-              onPointerMove={(e) => z && show(e, <div><b>Zona {k}</b><br />{z.n} lanzamientos<br />Swing: <b>{z.swing}%</b> · Whiff: <b>{z.whiff ?? '-'}%</b><br />wOBA: <b>{z.woba ?? '-'}</b> · xwOBA: <b>{z.xwoba ?? '-'}</b></div>)}
+              onPointerMove={(e) => z && show(e, <div><b>Zona {k}</b><br />{z.n} lanzamientos<br />Swing <b>{z.swing}%</b> · Whiff <b>{z.whiff ?? '-'}%</b><br />wOBA <b>{z.woba ?? '-'}</b> · xwOBA <b>{z.xwoba ?? '-'}</b></div>)}
               onPointerLeave={hide}
               style={{ aspectRatio: '1 / 1.1', background: c, borderRadius: 6, display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: '1.05rem', textShadow: '0 1px 2px rgba(0,0,0,0.35)' }}
             >
@@ -195,7 +195,7 @@ export function ZoneHeat({ zones, metric = 'xwoba', title, good = 'high' }: { zo
           )
         })}
       </div>
-      <div className="small muted" style={{ textAlign: 'center', marginTop: 8 }}>Rojo: más daño del bateador · Azul: menos. Celdas con menos de 25 lanzamientos quedan vacías.</div>
+      <div className="small muted" style={{ textAlign: 'center', marginTop: 8 }}>El rojo indica más daño del bateador y el azul, menos. Las celdas con menos de 25 lanzamientos quedan vacías.</div>
       {node}
     </div>
   )
@@ -225,7 +225,7 @@ export function MonthBars({ rows, valueKey, fmt, title, sub, color = 'var(--s1)'
         <g className="grid">{y.ticks(4).map((t) => <line key={t} x1={m.l} x2={w - m.r} y1={y(t)} y2={y(t)} />)}</g>
         <g className="axis">{y.ticks(4).map((t) => <text key={t} x={m.l - 5} y={y(t) + 4} textAnchor="end">{fmt(t)}</text>)}</g>
         {data.map((d, i) => (
-          <g key={i} onPointerMove={(e) => show(e, <div><b>{d.m}</b><br />{Object.entries(d.r).filter(([k]) => k !== 'm').map(([k, v]) => <div key={k}>{k}: <b>{String(v)}</b></div>)}</div>)} onPointerLeave={hide}>
+          <g key={i} onPointerMove={(e) => show(e, <div><b>{d.m}</b><br />{Object.entries(d.r).filter(([k]) => k !== 'm').map(([k, v]) => <div key={k}>{k} <b>{String(v)}</b></div>)}</div>)} onPointerLeave={hide}>
             <rect x={x(i) - bw / 2} y={y(d.v)} width={bw} height={h - m.b - y(d.v)} rx={4} fill={color} />
             <text x={x(i)} y={y(d.v) - 4} textAnchor="middle" style={{ fontWeight: 700, fill: 'var(--ink)' }}>{fmt(d.v)}</text>
             <text x={x(i)} y={h - 10} textAnchor="middle">{d.m}</text>

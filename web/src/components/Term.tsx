@@ -167,7 +167,7 @@ function Modal({ id, onClose, onJump }: { id: string; onClose: () => void; onJum
         <p>{e.use}</p>
         <h3>Cuánto vale y sus límites</h3>
         <p>{e.worth}</p>
-        {e.example ? <blockquote><b>Ejemplo de 2026:</b> {e.example}</blockquote> : null}
+        {e.example ? <blockquote><b>Ejemplo de 2026.</b> {e.example}</blockquote> : null}
 
         {e.related?.length ? (
           <>

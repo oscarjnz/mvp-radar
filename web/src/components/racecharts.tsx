@@ -20,7 +20,7 @@ export function WarDumbbell({ cands, title }: { cands: Candidate[]; title?: stri
   const x = scaleLinear().domain([0, top]).range([m.l, w - m.r])
   return (
     <div className="chart" ref={ref}>
-      {title ? <ChartHead title={title} sub="Círculo lleno: fWAR (FanGraphs) · Anillo: bWAR (Baseball Reference)" /> : null}
+      {title ? <ChartHead title={title} sub="El círculo lleno es el fWAR (FanGraphs) y el anillo es el bWAR (Baseball Reference)" /> : null}
       <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label={title}>
         <g className="grid">{x.ticks(6).map((t) => <line key={t} x1={x(t)} x2={x(t)} y1={m.t - 8} y2={h - m.b} />)}</g>
         <g className="axis">{x.ticks(6).map((t) => <text key={t} x={x(t)} y={h - 8} textAnchor="middle">{t}</text>)}<text x={m.l} y={12}>Victorias sobre un reemplazo (WAR)</text></g>
@@ -28,7 +28,7 @@ export function WarDumbbell({ cands, title }: { cands: Candidate[]; title?: stri
           const yy = m.t + i * rowH + rowH / 2
           const col = rankVar(c.rank)
           return (
-            <g key={c.id} onPointerMove={(e) => show(e, <div><b>{c.name}</b> ({c.team})<br />fWAR <b>{c.war.f}</b> · bWAR <b>{c.war.b}</b><br />Diferencia entre fuentes: <b>{Math.abs(c.war.f - c.war.b).toFixed(1)}</b></div>)} onPointerLeave={hide}>
+            <g key={c.id} onPointerMove={(e) => show(e, <div><b>{c.name}</b> ({c.team})<br />fWAR <b>{c.war.f}</b> · bWAR <b>{c.war.b}</b><br />Diferencia entre fuentes <b>{Math.abs(c.war.f - c.war.b).toFixed(1)}</b></div>)} onPointerLeave={hide}>
               <text x={m.l - 10} y={yy + 4} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 650 }}>{short(c.name)}</text>
               <line x1={x(c.war.f)} x2={x(c.war.b)} y1={yy} y2={yy} stroke={col} strokeWidth={3} opacity={0.5} strokeLinecap="round" />
               <circle cx={x(c.war.f)} cy={yy} r={7} fill={col} stroke="var(--surface)" strokeWidth={2} />
@@ -53,7 +53,7 @@ export function ValueScatter({ cands, title }: { cands: Candidate[]; title?: str
   const y = scaleLinear().domain([2, top]).range([h - m.b, m.t])
   return (
     <div className="chart" ref={ref}>
-      {title ? <ChartHead title={title} sub="Relleno: equipo en playoffs · Hueco: no clasificó" /> : null}
+      {title ? <ChartHead title={title} sub="Relleno si el equipo llegó a playoffs, hueco si no clasificó" /> : null}
       <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label={title}>
         <g className="grid">{y.ticks(5).map((t) => <line key={t} x1={m.l} x2={w - m.r} y1={y(t)} y2={y(t)} />)}{x.ticks(6).map((t) => <line key={t} x1={x(t)} x2={x(t)} y1={m.t} y2={h - m.b} />)}</g>
         <g className="axis">
@@ -107,7 +107,7 @@ export function WarParts({ cands, title }: { cands: Candidate[]; title?: string 
             {hitters.map((c, i) => {
               const v = (c.hit as any)[p.k] as number
               return (
-                <g key={c.id} onPointerMove={(e) => show(e, <div><b>{c.name}</b><br />{p.label}: <b>{v > 0 ? '+' : ''}{v}</b> carreras</div>)} onPointerLeave={hide}>
+                <g key={c.id} onPointerMove={(e) => show(e, <div><b>{c.name}</b><br />{p.label} <b>{v > 0 ? '+' : ''}{v}</b> carreras</div>)} onPointerLeave={hide}>
                   <rect x={Math.min(x(0), x(v))} y={i * bandH + 4} width={Math.abs(x(v) - x(0))} height={bandH - 6} rx={3} fill={rankVar(c.rank)} />
                   <text x={v >= 0 ? x(v) + 4 : x(v) - 4} y={i * bandH + 16} textAnchor={v >= 0 ? 'start' : 'end'} style={{ fontSize: 10 }}>{v}</text>
                 </g>
@@ -140,7 +140,7 @@ export function LabBars({ rows, weights }: { rows: { c: Candidate; comp: Compone
           let acc = 0
           const yy = m.t + i * rowH
           return (
-            <g key={r.c.id} onPointerMove={(e) => show(e, <div><b>{r.c.name}</b> · puntaje <b>{r.score.toFixed(1)}</b>{CRITERIA.map((cr) => <div key={cr.key}>{cr.label}: <b>{r.comp[cr.key].toFixed(0)}</b>/100</div>)}</div>)} onPointerLeave={hide}>
+            <g key={r.c.id} onPointerMove={(e) => show(e, <div><b>{r.c.name}</b> · puntaje <b>{r.score.toFixed(1)}</b>{CRITERIA.map((cr) => <div key={cr.key}>{cr.label} <b>{r.comp[cr.key].toFixed(0)}</b>/100</div>)}</div>)} onPointerLeave={hide}>
               <text x={m.l - 8} y={yy + 21} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 650 }}>{i + 1}. {short(r.c.name)}</text>
               {CRITERIA.map((cr) => {
                 const part = (r.comp[cr.key] * weights[cr.key]) / total

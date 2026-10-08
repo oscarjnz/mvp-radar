@@ -66,7 +66,7 @@ export function CoefBars({ coefs, halves }: { coefs: { label: string; value: num
             {tags.map((t, ti) => {
               const v = halves[t][i + 1]
               return (
-                <g key={t} onPointerMove={(e) => show(e, <div><b>{t}</b><br />{r.label}: <b>{v > 0 ? '+' : ''}{(v * 100).toFixed(1)} pts de voto</b></div>)} onPointerLeave={hide}>
+                <g key={t} onPointerMove={(e) => show(e, <div><b>{t}</b><br />{r.label} <b>{v > 0 ? '+' : ''}{(v * 100).toFixed(1)} pts de voto</b></div>)} onPointerLeave={hide}>
                   <rect x={Math.min(x(0), x(v))} y={22 + ti * 17} width={Math.abs(x(v) - x(0))} height={13} rx={3} fill={ti === 0 ? 'var(--s1)' : 'var(--s2)'} />
                   <text x={x(v) + 5} y={33 + ti * 17} style={{ fontSize: 10 }}>{(v * 100).toFixed(1)}</text>
                 </g>
@@ -96,7 +96,7 @@ export function BallotBars({ ballots, title }: { ballots: Ballot[]; title?: stri
         {ballots.map((b, i) => {
           const yy = m.t + i * rowH
           return (
-            <g key={b.name} onPointerMove={(e) => show(e, <div><b>{b.name}</b> ({b.team})<br />Puntos: <b>{b.pts}</b> · votos de 1.er lugar: <b>{b.first}</b><br />WAR <b>{b.war}</b> · {b.w}-{b.l} {b.playoffs ? '· playoffs' : '· sin playoffs'}</div>)} onPointerLeave={hide}>
+            <g key={b.name} onPointerMove={(e) => show(e, <div><b>{b.name}</b> ({b.team})<br />Puntos <b>{b.pts}</b> · votos de 1.er lugar <b>{b.first}</b><br />WAR <b>{b.war}</b> · {b.w}-{b.l} {b.playoffs ? '· playoffs' : '· sin playoffs'}</div>)} onPointerLeave={hide}>
               <text x={m.l - 8} y={yy + 19} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: i === 0 ? 800 : 500 }}>{b.rank}. {last(b.name)}{b.role !== 'hitter' ? ` (${b.role === 'pitcher' ? 'P' : 'P/DH'})` : ''}</text>
               <rect x={m.l} y={yy + 5} width={x(100) - m.l} height={rowH - 11} rx={4} fill="var(--grid)" />
               <rect x={m.l} y={yy + 5} width={Math.max(2, x(b.share) - m.l)} height={rowH - 11} rx={4} fill={i === 0 ? 'var(--s1)' : 'var(--axis)'} />
@@ -105,7 +105,7 @@ export function BallotBars({ ballots, title }: { ballots: Ballot[]; title?: stri
           )
         })}
       </svg>
-      <p className="small muted" style={{ margin: '4px 0 0' }}>Barra: porcentaje de puntos posibles. Derecha: voto y WAR.</p>
+      <p className="small muted" style={{ margin: '4px 0 0' }}>La barra muestra el porcentaje de puntos posibles. A la derecha aparecen el voto y el WAR.</p>
       {node}
     </div>
   )
@@ -127,7 +127,7 @@ export function GapDumbbell({ rows }: { rows: { label: string; winner: string; w
         {rows.map((r, i) => {
           const yy = m.t + i * rowH + rowH / 2
           return (
-            <g key={r.label} onPointerMove={(e) => show(e, <div><b>{r.label}</b><br />Ganó {r.winner}: WAR <b>{r.winnerWar}</b><br />{r.snub} (terminó {r.rank}.º): WAR <b>{r.snubWar}</b></div>)} onPointerLeave={hide}>
+            <g key={r.label} onPointerMove={(e) => show(e, <div><b>{r.label}</b><br />Ganó {r.winner} con WAR <b>{r.winnerWar}</b><br />{r.snub} (terminó {r.rank}.º) con WAR <b>{r.snubWar}</b></div>)} onPointerLeave={hide}>
               <text x={m.l - 10} y={yy + 4} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 600 }}>{r.label}</text>
               <line x1={x(r.winnerWar)} x2={x(r.snubWar)} y1={yy} y2={yy} stroke="var(--s2)" strokeWidth={3} opacity={0.5} strokeLinecap="round" />
               <circle cx={x(r.winnerWar)} cy={yy} r={7} fill="var(--s1)" stroke="var(--surface)" strokeWidth={2} />

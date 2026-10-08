@@ -15,7 +15,7 @@ export default function Glossary() {
     <div className="wrap">
       <div className="eyebrow">Para entender los números</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Glosario</h1>
-      <p className="lede">Cada término de esta web explicado en lenguaje de aficionado: qué mide, cómo se lee, para qué sirve y cuánto se puede confiar en él. En cualquier página, los términos subrayados con puntos abren esta misma explicación al hacer clic.</p>
+      <p className="lede">Cada término de esta web se explica en lenguaje de aficionado, con lo que mide, cómo se lee, para qué sirve y cuánto se puede confiar en él. En cualquier página, los términos subrayados con puntos abren esta misma explicación al hacer clic.</p>
       <input className="gloss-search" type="search" placeholder="Buscar un término (WAR, OPS, xwOBA...)" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar un término" />
       {cats.map((c) => {
         const items = list.filter((e) => e.category === c)

@@ -8,7 +8,7 @@ import sys
 import time
 import urllib.request
 
-from candidates import TOP5
+from candidates import BUBBLE, TOP5
 from common import RAW
 
 FORCE = "--force" in sys.argv
@@ -60,7 +60,7 @@ def fetch(pid, kind):
 def main():
     ids = player_ids()
     for lg in ("AL", "NL"):
-        for name, role in TOP5[lg]:
+        for name, role in TOP5[lg] + BUBBLE[lg]:
             if role in ("hitter", "twoway"):
                 pid = ids[(name, "hitter")]
                 fetch(pid, "batter")

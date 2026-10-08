@@ -37,3 +37,28 @@ export function useAsync<T>(path: string | null) {
 export const useCandidates = () => useAsync<CandidatesData>('/data/candidates.json')
 export const useHistory = () => useAsync<HistoryData>('/data/history.json')
 export const usePlayer = (id: number | string | null) => useAsync<PlayerDetail>(id ? `/data/players/${id}.json` : null)
+
+export interface Profile {
+  id: number
+  name: string
+  number: string | null
+  birth: string
+  age: number
+  city: string
+  country: string
+  height: string
+  weight: number
+  pos: string
+  bats: string
+  throws: string
+  debut: string
+  teamName: string | null
+  teamId: number | null
+  active: boolean
+  awards: Record<string, string[]>
+  seasons: any[]
+  links: { mlb: string; savant: string; bbref: string }
+}
+
+export const useCompare = () => useAsync<Record<string, any>>('/data/compare.json')
+export const useProfiles = () => useAsync<Record<string, Profile>>('/data/profiles.json')

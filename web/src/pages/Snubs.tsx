@@ -1,85 +1,117 @@
 import { Link } from 'react-router-dom'
-import { useHistory } from '../lib/data'
-import { headshot } from '../lib/format'
-import { DataTable, ErrorBox, Loading, Section } from '../components/ui'
+import { useCompare, useHistory, useProfiles } from '../lib/data'
+import { slash } from '../lib/format'
+import { Callout, DataTable, ErrorBox, Face, Loading, NameLink, Section } from '../components/ui'
 import { GapDumbbell } from '../components/histcharts'
-import { P, Li } from '../components/Term'
+import Versus from '../components/Versus'
+import { Li, P } from '../components/Term'
+import { NOTE_2020 } from '../data/histStory'
 
+/** Contexto de cada caso. Las cifras provienen de las votaciones de Baseball Reference y de la MLB Stats API. */
 const WHY: Record<string, string> = {
-  '2018-Jacob deGrom': 'Ganó el Cy Young de la Nacional y aun así no pasó del quinto lugar en el MVP. Su equipo terminó con más derrotas que victorias.',
-  '2021-Juan Soto': 'Lideró la liga en OBP (.465) y en bases por bolas (145). Washington no llegó a playoffs y Harper, de un equipo con mejor narrativa, se llevó 17 primeros lugares contra 6.',
-  '2021-Zack Wheeler': 'Lideró la Nacional en entradas (213.1) y en ponches (247), pero terminó 19.º. Es el ejemplo más claro de que un lanzador con la mejor temporada de la liga ni siquiera entra al debate.',
-  '2019-Alex Bregman': 'Tuvo más WAR que Trout (8.9 contra 7.9) en un equipo de playoffs, y perdió por 17 votos de primer lugar contra 13. Trout ganó aunque su equipo no llegó a playoffs.',
-  '2021-Fernando Tatis Jr.': 'Lideró la Nacional en jonrones (42) en solo 130 juegos, pero solo jugó 130 juegos y San Diego no llegó a playoffs.',
-  '2021-Trea Turner': 'Lideró la liga en hits (195) y promedio (.328). Jugó para dos equipos esa temporada (Washington y Los Ángeles).',
-  '2020-Shane Bieber': 'Ganó la Triple Corona de pitcheo y el Cy Young de 2020, en una temporada corta donde Abreu ganó con solo 2.7 de WAR.',
+  '2018-Jacob deGrom': 'Ganó el Cy Young de la Nacional y aun así no pasó del quinto lugar en el MVP. Su equipo terminó con más derrotas que victorias y fue el único, aparte del ganador, en recibir un voto de primer lugar.',
+  '2018-Aaron Nola': 'Su bWAR de 9.2 contrasta con un fWAR de 5.5, una diferencia muy grande entre las dos fuentes. Los Filis terminaron 80-82 y sin playoffs.',
+  '2018-Max Scherzer': 'Ponchó a 300 bateadores con 2.53 de efectividad para unos Nacionales (82-80) que no llegaron a playoffs. Por fWAR (7.5) no supera a Yelich (7.7).',
+  '2019-Alex Bregman': 'Superó a Trout por una victoria completa de bWAR en un equipo de 107 triunfos, y perdió por 17 votos de primer lugar contra 13. Trout ganó aunque su equipo no llegó a playoffs.',
+  '2019-Marcus Semien': 'Su bWAR de 8.4 es mucho mayor que su fWAR de 6.5. Fue tercero con 54% del voto para unos Atléticos de 97 victorias.',
+  '2020-Shane Bieber': 'Ganó la Triple Corona de pitcheo y el Cy Young en la temporada de 60 juegos. En un año tan corto, 0.5 de WAR de ventaja sobre Abreu equivalen a casi 1.4 en una campaña completa.',
+  '2021-Juan Soto': 'Lideró la liga en OBP (.465) y en boletos (145). Washington quedó fuera de playoffs, y Harper se llevó 17 votos de primer lugar contra 6 de Soto.',
+  '2021-Zack Wheeler': 'Encabezó la Nacional en entradas (213.1) y ponches (247) y terminó 19.º. Es el ejemplo más claro de un lanzador con la mejor temporada de la liga que ni siquiera entra al debate.',
+  '2021-Fernando Tatis Jr.': 'Lideró la Nacional en jonrones (42) en solo 130 juegos, y San Diego quedó fuera de playoffs.',
+  '2021-Trea Turner': 'Lideró la liga en hits (195) y en promedio (.328). Jugó esa temporada para dos equipos, Washington y Los Ángeles.',
+}
+
+const first = (n: string) => n.split(' ').slice(-1)[0]
+
+function genericText(x: any) {
+  if (x.role === 'pitcher') {
+    return `${x.name} (${x.team}, ${x.w}-${x.l}) terminó con ${x.pit?.era} de efectividad en ${x.pit?.ip} entradas y ${x.pit?.so} ponches. Sumó ${x.war} de bWAR, ${x.warGap} más que ${first(x.winner)}, y quedó ${x.voteRank}.º con ${x.share}% del voto.`
+  }
+  return `${x.name} (${x.team}, ${x.w}-${x.l}) bateó ${slash(x.bat?.avg)}/${slash(x.bat?.obp)}/${slash(x.bat?.slg)} con ${x.bat?.hr} jonrones y ${x.bat?.rbi} impulsadas. Sumó ${x.war} de bWAR, ${x.warGap} más que ${first(x.winner)}, y quedó ${x.voteRank}.º con ${x.share}% del voto.`
 }
 
 export default function Snubs() {
   const { data, error } = useHistory()
+  const compare = useCompare()
+  const profiles = useProfiles()
   if (error) return <div className="wrap"><ErrorBox msg={error} /></div>
   if (!data) return <div className="wrap"><Loading h={500} /></div>
   const sn = data.snubs
+  const ids: Record<string, number> = {}
+  if (profiles.data) Object.values(profiles.data).forEach((p) => { ids[p.name] = p.id })
   const rows = sn.map((x: any) => ({
-    label: `${x.year} ${x.lg} · ${x.name.split(' ').slice(-1)[0]}`, winner: x.winner.split(' ').slice(-1)[0], winnerWar: x.winnerWar, snub: x.name, snubWar: x.war, rank: x.voteRank,
+    label: `${x.year} ${x.lg} · ${first(x.name)}`, winner: first(x.winner), winnerWar: x.winnerWar, snub: x.name, snubWar: x.war, rank: x.voteRank,
   }))
+  const pit = sn.filter((x: any) => x.role === 'pitcher').length
 
   return (
     <div className="wrap">
-      <div className="eyebrow">Lo que pudo ser</div>
+      <div className="eyebrow">Análisis de la votación</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Debió ser MVP</h1>
-      <P className="lede">Se buscaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones: {sn.filter((x: any) => x.role === 'pitcher').length} lanzadores y {sn.filter((x: any) => x.role !== 'pitcher').length} bateadores.</P>
+      <P className="lede">Se revisaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones, {pit} de lanzadores y {sn.length - pit} de bateadores. Cada caso muestra al jugador frente al ganador, con los números que sostienen el argumento.</P>
 
-      <Section title="La brecha en un vistazo" eyebrow="Gráfico">
+      <Section title="La brecha de WAR" eyebrow="Panorama">
         <div className="card"><GapDumbbell rows={rows} /></div>
-        <P className="small muted" style={{ marginTop: 8 }}>WAR de Baseball Reference. Un WAR más alto no siempre es «mejor jugador», pero si el voto dice «valor», esta es la contradicción que hay que explicar.</P>
+        <P className="small muted" style={{ marginTop: 8 }}>WAR de Baseball Reference. Un WAR más alto no siempre significa un mejor jugador, pero si el premio se define por valor, esta es la contradicción que hay que explicar.</P>
       </Section>
 
-      <Section title="Los casos" eyebrow="Uno por uno">
-        <div className="grid g2">
+      <Section title="Casos en detalle" eyebrow="Jugador frente al ganador">
+        <div className="grid" style={{ gap: 18 }}>
           {sn.map((x: any) => {
-            const key = `${x.year}-${x.name}`
-            const isP = x.role === 'pitcher'
+            const key = `${x.year}-${x.lg}`
+            const custom = WHY[`${x.year}-${x.name}`]
+            const cmp = compare.data ? compare.data[key] : null
+            const rival = cmp ? cmp.rivals.find((r: any) => r.name === x.name) : null
+            const sid = x.mlbId ?? rival?.mlbId
+            const wid = cmp?.winner?.mlbId
             return (
-              <div className="card" key={key}>
-                <div className="pcard" style={{ gridTemplateColumns: '72px 1fr' }}>
-                  <img className="photo" style={{ width: 72, borderRadius: 12, border: '3px solid var(--s2)' }} src={headshot(x.mlbId, 144)} alt={x.name} />
+              <article className="card" key={`${key}-${x.name}`}>
+                <div className="eyebrow" style={{ marginBottom: 8 }}>{x.year}{x.year === 2020 ? ' *' : ''} · {x.lg === 'AL' ? 'Liga Americana' : 'Liga Nacional'} · terminó {x.voteRank}.º</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 14, alignItems: 'center' }}>
+                  <Face id={sid} name={x.name} width={88} color="var(--s2)" />
                   <div>
-                    <div className="eyebrow" style={{ marginBottom: 0 }}>{x.year} · {x.lg === 'AL' ? 'Americana' : 'Nacional'} · terminó {x.voteRank}.º</div>
-                    <h3 style={{ margin: 0 }}>{x.name} <span className="muted small">({x.team})</span></h3>
+                    <h3 style={{ margin: 0 }}><NameLink id={sid} name={x.name} /> <span className="muted small">({x.team})</span></h3>
                     <div className="statline">
-                      <span><b>{x.war}</b> WAR</span><span>vs <b>{x.winnerWar}</b> de {x.winner}</span><span><b>+{x.warGap}</b></span>
-                      <span>{x.w}-{x.l}{x.playoffs ? ' ★' : ''}</span>
+                      <span><b>{x.war}</b> bWAR</span>
+                      <span>contra <b>{x.winnerWar}</b> de {first(x.winner)}</span>
+                      <span><b>+{x.warGap}</b></span>
                     </div>
+                    <div className="small muted">{x.w}-{x.l}{x.playoffs ? ' en playoffs' : ' sin playoffs'} · {x.share}% del voto</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <Face id={wid} name={x.winner} width={72} color="var(--s1)" />
+                    <div className="small muted" style={{ marginTop: 4 }}>MVP</div>
                   </div>
                 </div>
-                <P style={{ marginTop: 10 }}>
-                  {WHY[key] ||
-                    (isP
-                      ? `Lanzador que superó al ganador por ${x.warGap} de WAR y terminó ${x.voteRank}.º con ${x.share}% del voto. Es parte del patrón: el líder de WAR entre los votados que fue lanzador nunca ganó.`
-                      : `Terminó ${x.voteRank}.º con ${x.share}% del voto, con ${x.warGap} más de WAR que ${x.winner}.`)}
-                </P>
-                {x.pit ? <P className="small muted">{x.pit.w}-{x.pit.l}, {x.pit.era} de efectividad, {x.pit.so} ponches en {x.pit.ip} entradas.</P> : x.bat ? <P className="small muted">{x.bat.avg}/{x.bat.obp}/{x.bat.slg}, {x.bat.hr} HR, {x.bat.rbi} RBI.</P> : null}
-              </div>
+                <P style={{ marginTop: 12 }}>{custom || genericText(x)}</P>
+                {x.year === 2020 ? <P className="small muted">Temporada de 60 juegos. Consulta la nota sobre 2020 en el historial.</P> : null}
+                <details className="tbl" style={{ marginTop: 6 }}>
+                  <summary>Ver la comparación completa</summary>
+                  {cmp ? <Versus people={[cmp.winner, ...cmp.rivals.filter((r: any) => r.name === x.name)]} winnerName={cmp.winner.name} title={`${x.name} frente a ${cmp.winner.name}`} /> : <Loading h={120} />}
+                </details>
+                <P className="small" style={{ marginTop: 8 }}><Link to={`/historial?anio=${x.year}&liga=${x.lg}`}>Ver la votación completa de {x.year}</Link></P>
+              </article>
             )
           })}
         </div>
       </Section>
 
-      <Section title="Los casi" eyebrow="Entre 0.2 y 0.5 de WAR">
+      <Section title="Diferencias mínimas" eyebrow="Entre 0.2 y 0.5 de WAR">
         <div className="card">
           <DataTable head={['Año', 'Liga', 'Jugador', 'Puesto', 'WAR', 'Ganador', 'WAR ganador', 'Brecha']}
-            rows={data.nearMisses.map((x: any) => [x.year, x.lg, x.name, `${x.voteRank}.º`, x.war, x.winner, x.winnerWar, `+${x.warGap}`])} left={[1, 2, 5]} />
+            rows={data.nearMisses.map((x: any) => [x.year, x.lg, <NameLink key={x.name + x.year} id={ids[x.name]} name={x.name} />, `${x.voteRank}.º`, x.war, x.winner, x.winnerWar, `+${x.warGap}`])} left={[1, 2, 5]} />
           <P className="small muted" style={{ marginTop: 8 }}>Brechas tan pequeñas caen dentro del margen de error del WAR. Se incluyen porque ayudan a leer casos como los de la Nacional en 2025.</P>
         </div>
       </Section>
 
-      <Section title="Lo que enseña" eyebrow="Lecciones">
+      <Callout title="Una nota sobre 2020">{NOTE_2020}</Callout>
+
+      <Section title="Conclusiones" eyebrow="Lo que muestran los casos">
         <div className="card">
           <ul className="clean">
-            <Li><b>El pitcheo es el gran perdedor.</b> Los tres mayores huecos de WAR de la década (deGrom, Nola y Wheeler) son lanzadores.</Li>
-            <Li><b>El nombre y el equipo pesan.</b> Trout 2019, Harper 2021 y Ohtani 2021 y 2023 ganaron frente a alguien con más WAR o con un equipo mejor.</Li>
-            <Li><b>El WAR no resuelve el debate.</b> En 2026, McGonigle tiene 7.1 de bWAR y 5.4 de fWAR: la misma temporada, dos historias. <Link to="/carrera">Mira la carrera actual</Link>.</Li>
+            <li><b>El pitcheo es el gran perdedor.</b> Los tres mayores huecos de WAR de la década (deGrom, Nola y Wheeler) son de lanzadores.</li>
+            <li><b>El nombre y el equipo pesan.</b> Trout en 2019, Harper en 2021 y Ohtani en 2021 y 2023 ganaron frente a rivales con más WAR o con un equipo mejor.</li>
+            <li><b>El WAR no cierra el debate.</b> En 2026, McGonigle tiene 7.1 de bWAR y 5.4 de fWAR, la misma temporada con dos lecturas distintas. <Link to="/carrera">Consulta la carrera actual</Link>.</li>
           </ul>
         </div>
       </Section>

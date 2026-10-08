@@ -28,7 +28,7 @@ export default function Home() {
         ) : null}
       </header>
 
-      <Section title="Los favoritos hoy" eyebrow="Carrera MVP 2026" lede={c.data ? c.data.status : undefined}>
+      <Section title="Favoritos de la temporada" eyebrow="Carrera MVP 2026" lede={c.data ? c.data.status : undefined}>
         {!c.data ? <Loading h={200} /> : (
           <div className="grid g2">
             {(['AL', 'NL'] as const).map((lg) => (
@@ -44,14 +44,14 @@ export default function Home() {
         )}
       </Section>
 
-      <Section title="Qué encontrarás" eyebrow="Explora">
+      <Section title="Secciones del portal" eyebrow="Explora">
         <div className="grid g3">
           <Link to="/carrera" className="card" style={{ color: 'inherit' }}><h3>Carrera 2026</h3><p className="muted">Top 5 por liga con percentiles de Savant, spray charts, mapas de zona, bat tracking y un laboratorio para armar tu propia boleta.</p></Link>
           <Link to="/historial" className="card" style={{ color: 'inherit' }}><h3>Últimos 10 MVP</h3><p className="muted">Los 20 ganadores de 2016 a 2025, su boleta completa y si el WAR respalda la decisión.</p></Link>
-          <Link to="/que-premian" className="card" style={{ color: 'inherit' }}><h3>Qué premian</h3><p className="muted">Qué pesa más (WAR, playoffs, jonrones), qué cambió en la década y por qué los lanzadores no ganan.</p></Link>
+          <Link to="/que-premian" className="card" style={{ color: 'inherit' }}><h3>Qué premian los votantes</h3><p className="muted">Qué pesa más (WAR, playoffs, jonrones), qué cambió en la década y por qué los lanzadores no ganan.</p></Link>
           <Link to="/injusticias" className="card" style={{ color: 'inherit' }}><h3>Debió ser MVP</h3><p className="muted">Los jugadores con más WAR que el ganador y por qué se quedaron sin el premio.</p></Link>
           <Link to="/metodologia" className="card" style={{ color: 'inherit' }}><h3>Metodología</h3><p className="muted">De dónde salen los datos, cómo se eligió el top 5 y los límites del análisis.</p></Link>
-          <Link to="/glosario" className="card" style={{ color: 'inherit' }}><h3>Glosario</h3><p className="muted">Cada estadística explicada en lenguaje de aficionado: qué mide, cómo se lee y cuánto vale.</p></Link>
+          <Link to="/glosario" className="card" style={{ color: 'inherit' }}><h3>Glosario</h3><p className="muted">Cada estadística explicada en lenguaje de aficionado, con lo que mide, cómo se lee y cuánto vale.</p></Link>
         </div>
       </Section>
     </div>

@@ -217,3 +217,27 @@ details.tbl summary { cursor: pointer; color: var(--muted); }
 .gloss-item:hover { border-color: var(--accent); }
 .footer .credit { color: var(--ink-2); }
 .footer .credit a { font-weight: 650; }
+
+/* fotos, citas y avisos */
+.face { display: inline-block; line-height: 0; border-radius: 16px; transition: transform 0.15s, box-shadow 0.15s; }
+.face:hover, .face:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); outline: none; }
+.quote { margin: 16px 0 0; padding: 14px 16px; background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; }
+.quote blockquote { margin: 0; padding: 0; background: none; border: 0; }
+.quote blockquote p { margin: 0 0 6px; font-size: 1.05rem; color: var(--ink); }
+.quote figcaption { margin-top: 8px; font-size: 0.85rem; color: var(--ink-2); }
+.callout { background: color-mix(in srgb, var(--s4) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--s4) 40%, var(--border)); border-radius: 12px; padding: 12px 16px; margin: 18px 0 0; }
+.callout p { margin: 4px 0 0; color: var(--ink-2); }
+.eval { display: grid; gap: 10px; background: var(--surface-2); border-radius: 12px; padding: 14px 16px; margin-top: 14px; }
+.eval .line { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.eval-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
+.eval-legend div { font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.eval-legend .verdict { margin-bottom: 4px; }
+@media (max-width: 640px) { .eval-legend { grid-template-columns: minmax(0, 1fr); } }
+.versus { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 560px; }
+.versus th, .versus td { padding: 8px 10px; border-bottom: 1px solid var(--grid); text-align: center; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.versus thead th { vertical-align: bottom; padding-bottom: 12px; border-bottom: 1px solid var(--axis); }
+.versus tbody th { text-align: left; font-weight: 600; color: var(--ink-2); white-space: nowrap; width: 150px; }
+.versus td.best { font-weight: 800; color: var(--accent); }
+.versus .who { display: grid; justify-items: center; gap: 6px; }
+.versus .who .nm { font-weight: 700; line-height: 1.2; }
+.versus .who .tag { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }

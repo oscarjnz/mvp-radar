@@ -96,7 +96,12 @@ def clean_name(n):
 
 def row_to_ballot(r, lg, year, st, po_ids):
     team = TEAM_MAP.get(r.get("team_ID"), r.get("team_ID"))
-    tinfo = st.get(team) if r.get("team_ID") not in ("TOT", "2TM", "3TM") else None
+    tinfo = None
+    if r.get("team_ID") not in ("TOT", "2TM", "3TM"):
+        for key in (team, r.get("team_ID"), "OAK" if team == "ATH" else None):
+            if key and key in st:
+                tinfo = st[key]
+                break
     ip = fnum(r.get("IP"))
     pitcher = bool(ip and ip > 0)
     hitter = bool(fnum(r.get("AB")) and fnum(r.get("AB")) > (150 if pitcher else 20))
@@ -195,7 +200,7 @@ def main():
             "twoWay": sum(1 for w in ws if w["role"] == "twoway"),
         }
 
-    early, late = block(lambda y: y <= 2020), block(lambda y: y >= 2021)
+    early, short, late = block(lambda y: y <= 2019), block(lambda y: y == 2020), block(lambda y: y >= 2021)
 
     # Regresion lineal: share ~ WAR_z + playoffs + pitcher + hr_leader proxy (hr/10) + winPct
     X, y_, labels = [], [], []
@@ -212,12 +217,12 @@ def main():
     pred = Xa @ beta
     ss_res, ss_tot = float(np.sum((ya - pred) ** 2)), float(np.sum((ya - ya.mean()) ** 2))
     r2 = 1 - ss_res / ss_tot
-    names = ["Constante", "WAR (z dentro de la liga y ano)", "Equipo en playoffs", "Jonrones (por cada 10)", "Pct. de victorias del equipo (por cada .100)"]
+    names = ["Constante", "WAR (por desviación estándar dentro de cada liga y año)", "Equipo en playoffs", "Jonrones (por cada 10)", "Porcentaje de victorias del equipo (por cada .100)"]
     coefs = [{"label": nm, "value": round(float(c), 3)} for nm, c in zip(names, beta)]
 
     # Mismo modelo por mitad de la decada
     halves = {}
-    for tag, rng in (("2016-2020", range(2016, 2021)), ("2021-2025", range(2021, 2026))):
+    for tag, rng in (("2016-2019", range(2016, 2020)), ("2021-2025", range(2021, 2026))):
         Xs, ys = [], []
         for year, lg, b, winner in flat:
             if year not in rng or b["share"] is None or b["playoffs"] is None or b["w"] is None:
@@ -295,7 +300,7 @@ def main():
         "summary": {
             "n": n, "playoffsPct": pct(playoffs_k), "warLeaderWon": war_leader_k, "withinHalfWar": within_k,
             "hitters": hit_k, "pitchers": pit_k, "twoWay": two_k, "unanimous": unani,
-            "early": early, "late": late,
+            "early": early, "short": short, "late": late,
             "regression": {"coefs": coefs, "r2": round(r2, 3), "n": int(len(ya)), "halves": halves},
             "rankCorrelation": corr,
         },

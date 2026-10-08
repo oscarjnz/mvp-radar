@@ -1,55 +1,69 @@
 import { Link } from 'react-router-dom'
-import { Section } from '../components/ui'
-import { P, Li } from '../components/Term'
+import { Callout, QuoteCard, Section } from '../components/ui'
+import { Li, P } from '../components/Term'
+import { NOTE_2020, QUOTES } from '../data/histStory'
 
 export default function Method() {
   return (
     <div className="wrap">
       <div className="eyebrow">Cómo está hecho</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Metodología</h1>
-      <P className="lede">Todo el análisis sale de datos públicos. Los números se obtienen con scripts reproducibles y se publican tal cual en la página.</P>
+      <P className="lede">Todo el análisis sale de datos públicos. Las cifras se obtienen con scripts reproducibles y se publican tal cual en la página.</P>
 
-      <Section title="Fuentes" eyebrow="De dónde sale cada dato">
+      <Section title="Fuentes de datos" eyebrow="Origen de cada dato">
         <div className="card">
           <ul className="clean">
-            <Li><b>MLB Stats API (statsapi.mlb.com).</b> Estadísticas de temporada, sabermetría (fWAR, wRC+, wOBA, componentes), standings, biografías, splits por mes y game logs. Su WAR coincide con el de FanGraphs.</Li>
-            <Li><b>Baseball Savant.</b> Percentiles, expected stats, Statcast pitch a pitch (batazos, zonas, bat tracking, arsenal).</Li>
-            <Li><b>Baseball Reference.</b> bWAR, WPA, RE24 y todas las votaciones de MVP 2016-2025 (Bill Deane, Award Voting).</Li>
+            <Li><b>MLB Stats API.</b> Estadísticas de temporada, sabermetría (fWAR, wRC+, wOBA y sus componentes), posiciones, biografías, splits por mes y registros de juego. Su WAR coincide con el de FanGraphs.</Li>
+            <Li><b>Baseball Savant.</b> Percentiles, estadísticas esperadas y Statcast pitch a pitch (batazos, zonas, bat tracking y arsenal).</Li>
+            <Li><b>Baseball Reference.</b> bWAR, WPA, RE24 y todas las votaciones de MVP de 2016 a 2025 (Bill Deane, Award Voting).</Li>
             <Li><b>FanGraphs.</b> Verificación cruzada de WAR, wRC+ y valor por componentes.</Li>
-            <Li><b>MLB.com.</b> Perfiles de jugadores y las encuestas de MVP de septiembre de 2026 para el contraste.</Li>
+            <Li><b>MLB.com.</b> Perfiles de jugadores y encuestas de MVP de septiembre de 2026 para contrastar el análisis.</Li>
           </ul>
-          <P className="small muted" style={{ marginTop: 8 }}>Datos de la temporada 2026 al cierre de la temporada regular (27 de septiembre). Los premios oficiales de la BBWAA se anuncian en noviembre. Este sitio no está afiliado a MLB ni a ninguna de estas fuentes. Fotos y logos son de MLB y se enlazan con fines educativos.</P>
+          <P className="small muted" style={{ marginTop: 8 }}>Los datos de 2026 corresponden al cierre de la temporada regular, el 27 de septiembre. Los premios oficiales de la BBWAA se anunciarán en noviembre. Este sitio es independiente y no tiene relación con MLB ni con ninguna de estas fuentes. Las fotos y los logos pertenecen a MLB y se enlazan con fines educativos.</P>
         </div>
       </Section>
 
       <Section title="Cómo se eligió el top 5" eyebrow="Criterio">
         <div className="card">
-          <P>Se partió de todos los jugadores con 200 o más turnos y los lanzadores con 60 o más entradas. Se ordenaron por fWAR, bWAR, wRC+ (o ERA y FIP), WPA, RE24, record del equipo y disponibilidad, y se leyeron las encuestas de MLB.com como contraste. El orden final es un juicio, no una fórmula: la tabla y el laboratorio de la página de la carrera muestran cómo cambia con distintos pesos.</P>
-          <P>Ohtani cuenta como dos vías: su WAR suma el de bateo y el de pitcheo.</P>
+          <P>Se partió de todos los jugadores con 200 o más turnos y de los lanzadores con 60 o más entradas. Se ordenaron según fWAR, bWAR, wRC+ (o ERA y FIP), WPA, RE24, récord del equipo y disponibilidad, y se tomaron las encuestas de MLB.com como contraste. El orden final es un juicio y no una fórmula. La tabla y el laboratorio de la página de la carrera permiten ver cómo cambia con distintos pesos.</P>
+          <P>Ohtani cuenta como jugador de dos vías, así que su WAR suma el de bateo y el de pitcheo.</P>
         </div>
       </Section>
 
       <Section title="Cómo funciona la votación" eyebrow="BBWAA">
         <div className="card">
-          <P>La Asociación de Cronistas de Béisbol de América (BBWAA) elige el MVP de cada liga con 30 votantes, dos por cada ciudad. Cada uno nombra 10 jugadores: 14 puntos al primero, luego 9, 8, 7, 6, 5, 4, 3, 2 y 1. El máximo posible es 420 puntos (30 × 14), coherente con las boletas de la década. Los lanzadores y los designados son elegibles. Las instrucciones oficiales hablan de «valor real para su equipo», sin definir qué es valor; por eso cada votante pesa los criterios a su manera.</P>
+          <P>La Asociación de Cronistas de Béisbol de América (BBWAA) elige el MVP de cada liga con 30 votantes, dos por cada ciudad. Cada uno nombra a 10 jugadores y les asigna 14 puntos al primero y luego 9, 8, 7, 6, 5, 4, 3, 2 y 1. El máximo posible es de 420 puntos (30 por 14), coherente con las boletas de la década. Los lanzadores y los bateadores designados son elegibles.</P>
+          <P>La regla más antigua del voto pide valorar el aporte real del jugador a su equipo, pero no define qué cuenta como valor. Por eso cada votante pondera los criterios a su manera.</P>
+          <QuoteCard q={QUOTES.bbwaaRule} />
+        </div>
+      </Section>
+
+      <Section title="La temporada de 2020" eyebrow="Contexto">
+        <Callout title="Una temporada de 60 juegos">{NOTE_2020}</Callout>
+        <P className="small muted" style={{ marginTop: 10 }}>Por esa razón, en los análisis de épocas el año 2020 se muestra aparte y no se promedia con los demás.</P>
+      </Section>
+
+      <Section title="Citas y fuentes periodísticas" eyebrow="Voces del béisbol">
+        <div className="card">
+          <P>Las citas de periodistas incluidas en la web son breves, se reproducen tal como se publicaron y llevan el nombre del autor, el medio, el título del artículo, la fecha y un enlace. Cuando el original está en inglés, la traducción al español es propia. Cada cita se verificó contra el texto publicado.</P>
         </div>
       </Section>
 
       <Section title="Glosario" eyebrow="Para leer los números">
         <div className="card">
-          <P>Cada estadística de esta web tiene su explicación: qué mide, cómo se lee, para qué sirve y cuánto vale. Haz clic en cualquier término subrayado con puntos (WAR, wRC+, xwOBA...) o consulta la lista completa en el <Link to="/glosario">glosario</Link>.</P>
+          <P>Cada estadística de esta web tiene su explicación, que incluye qué mide, cómo se lee, para qué sirve y cuánto vale. Haz clic en cualquier término subrayado con puntos (WAR, wRC+, xwOBA y otros) o consulta la lista completa en el <Link to="/glosario">glosario</Link>.</P>
         </div>
       </Section>
 
-      <Section title="Límites" eyebrow="Para no sacar conclusiones de más">
+      <Section title="Límites del análisis" eyebrow="Para no sacar conclusiones de más">
         <div className="card">
           <ul className="clean">
-            <Li>El WAR no es una verdad única. Dos fuentes pueden diferir por más de una victoria para el mismo jugador (por ejemplo, Kevin McGonigle 2026).</Li>
-            <Li>La regresión histórica es descriptiva. Solo incluye jugadores que recibieron votos, así que no puede medir lo que le pasa a un lanzador que no aparece en la boleta.</Li>
-            <Li>Los veredictos «acertado», «discutible» y «cuestionable» usan solo la brecha de WAR respecto del mejor votado. No tienen en cuenta defensa, liderazgo, posteriores lesiones ni lo que ocurrió en octubre.</Li>
-            <Li>El orden del top 5 de 2026 es una opinión informada por datos, no una predicción.</Li>
+            <Li>El WAR no es una verdad única. Dos fuentes pueden diferir por más de una victoria para el mismo jugador, como ocurre con Kevin McGonigle en 2026.</Li>
+            <Li>La regresión histórica es descriptiva. Solo incluye a jugadores que recibieron votos, así que no puede medir qué le pasa a un lanzador que no aparece en la boleta.</Li>
+            <Li>Las valoraciones «acertado», «discutible» y «cuestionable» usan únicamente la brecha de bWAR respecto del mejor votado. No consideran defensa fuera del WAR, liderazgo, lesiones posteriores ni lo ocurrido en octubre.</Li>
+            <Li>El orden del top 5 de 2026 es una opinión informada por datos y no una predicción.</Li>
           </ul>
-          <P className="small muted" style={{ marginTop: 8 }}>Código y scripts de datos en el repositorio del proyecto. <Link to="/">Volver al inicio</Link>.</P>
+          <P className="small muted" style={{ marginTop: 8 }}>El código y los scripts de datos están en el repositorio del proyecto. <Link to="/">Volver al inicio</Link>.</P>
         </div>
       </Section>
     </div>

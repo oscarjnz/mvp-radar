@@ -4,10 +4,10 @@ export type Criterion = 'value' | 'production' | 'team' | 'availability' | 'posi
 export type Weights = Record<Criterion, number>
 
 export const CRITERIA: { key: Criterion; label: string; hint: string }[] = [
-  { key: 'value', label: 'Valor total (WAR)', hint: 'Promedio de fWAR y bWAR: lo que el jugador suma sobre un reemplazo.' },
-  { key: 'production', label: 'Producción', hint: 'wRC+ para bateadores; run prevention (ERA contra liga) para lanzadores.' },
+  { key: 'value', label: 'Valor total (WAR)', hint: 'Promedio de fWAR y bWAR, lo que el jugador suma sobre un reemplazo.' },
+  { key: 'production', label: 'Producción', hint: 'wRC+ para bateadores y prevención de carreras (ERA contra la liga) para lanzadores.' },
   { key: 'team', label: 'Equipo y playoffs', hint: 'Porcentaje de victorias del equipo y si llegó a octubre.' },
-  { key: 'availability', label: 'Disponibilidad', hint: 'Turnos (700 = 100) o entradas (200 = 100): estar en el campo cuenta.' },
+  { key: 'availability', label: 'Disponibilidad', hint: 'Turnos (700 equivalen a 100) o entradas (200 equivalen a 100). Estar en el campo cuenta.' },
   { key: 'position', label: 'Sesgo de posición', hint: 'Los votantes han castigado al designado y no han premiado a lanzadores puros.' },
 ]
 
@@ -16,7 +16,7 @@ export const PRESETS: { id: string; label: string; w: Weights; note: string }[] 
     id: 'typical',
     label: 'Votante típico (2016-2025)',
     w: { value: 45, production: 15, team: 25, availability: 5, position: 10 },
-    note: 'Pesos inspirados en la regresión histórica: WAR primero, después llegar a playoffs y el poder.',
+    note: 'Pesos inspirados en la regresión histórica, con el WAR primero y después los playoffs y el poder.',
   },
   { id: 'war', label: 'Solo WAR', w: { value: 100, production: 0, team: 0, availability: 0, position: 0 }, note: 'El criterio de un analista puro.' },
   { id: 'bat', label: 'Producción pura', w: { value: 0, production: 100, team: 0, availability: 0, position: 0 }, note: 'Quien mejor batea o evita carreras, sin ajuste.' },
