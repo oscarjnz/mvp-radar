@@ -62,7 +62,7 @@ export default function Voters() {
                 ['WAR promedio del ganador', e.avgWar, m.avgWar, l.avgWar],
                 ['Jonrones promedio del ganador', e.avgHr, m.avgHr, l.avgHr],
                 ['Votaciones unánimes', e.unanimous, m.unanimous, l.unanimous],
-                ['Ganadores de dos vías', e.twoWay, m.twoWay, l.twoWay],
+                ['Ganadores DH/P', e.twoWay, m.twoWay, l.twoWay],
                 ['Voto promedio del ganador', `${e.avgShare}%`, `${m.avgShare}%`, `${l.avgShare}%`],
                 ['Ganadores en equipo de playoffs', `${e.playoffsPct}%`, `${m.playoffsPct}%`, `${l.playoffsPct}%`],
                 ['Brecha media de WAR con el líder', e.avgWarGap, m.avgWarGap, l.avgWarGap],
@@ -74,7 +74,7 @@ export default function Voters() {
             <ul className="clean">
               <Li><b>Más consenso.</b> Hasta 2019, ninguna votación fue unánime. Entre 2021 y 2025 lo fueron {l.unanimous} de 10.</Li>
               <Li><b>Más poder.</b> Los jonrones del ganador pasaron de {e.avgHr} a {l.avgHr}, mientras que su WAR apenas cambió, de {e.avgWar} a {l.avgWar}.</Li>
-              <Li><b>Un perfil elegible más amplio.</b> Ohtani demostró que un jugador de dos vías puede ganar, y también un bateador designado (2024).</Li>
+              <Li><b>Un perfil elegible más amplio.</b> Ohtani demostró que un DH/P puede ganar, y también un bateador designado (2024).</Li>
               <Li><b>El equipo sigue contando.</b> El {e.playoffsPct}% de los ganadores de 2016 a 2019 jugó en playoffs, frente al {l.playoffsPct}% entre 2021 y 2025. Los seis que ganaron sin playoffs fueron Trout (2016 y 2019), Stanton (2017), Harper (2021) y Ohtani (2021 y 2023).</Li>
               <Li><b>Menos distancia con el líder de WAR.</b> La brecha media bajó de {e.avgWarGap} a {l.avgWarGap}, así que la votación se parece cada vez más al líder de WAR.</Li>
             </ul>
@@ -129,7 +129,7 @@ export default function Voters() {
         </div>
       </Section>
 
-      <P style={{ marginTop: 28 }}>Con esto en mente, <Link to="/carrera">revisa la carrera de 2026</Link> o <Link to="/injusticias">consulta los casos de jugadores que debieron ganar</Link>.</P>
+      <P style={{ marginTop: 28 }}>Con esto en mente, <Link to="/carrera">revisa la carrera de 2026</Link> o <Link to="/revision-del-voto">consulta la revisión del voto</Link>.</P>
     </div>
   )
 }

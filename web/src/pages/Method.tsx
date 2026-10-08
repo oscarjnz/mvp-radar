@@ -26,7 +26,7 @@ export default function Method() {
       <Section title="Cómo se eligió el top 5" eyebrow="Criterio">
         <div className="card">
           <P>Se partió de todos los jugadores con 200 o más turnos y de los lanzadores con 60 o más entradas. Se ordenaron según fWAR, bWAR, wRC+ (o ERA y FIP), WPA, RE24, récord del equipo y disponibilidad, y se tomaron las encuestas de MLB.com como contraste. El orden final es un juicio y no una fórmula. La tabla y el laboratorio de la página de la carrera permiten ver cómo cambia con distintos pesos.</P>
-          <P>Ohtani cuenta como jugador de dos vías, así que su WAR suma el de bateo y el de pitcheo.</P>
+          <P>Ohtani figura como DH/P, así que su WAR suma el de bateo y el de pitcheo.</P>
         </div>
       </Section>
 

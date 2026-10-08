@@ -184,7 +184,7 @@ export const STORY: Record<string, Story> = {
     ],
   },
   '2021-AL': {
-    context: 'Shohei Ohtani fue el primer jugador de dos vías premiado y el primer unánime de la década, con 9.0 de bWAR.',
+    context: 'Shohei Ohtani (DH/P) fue el primer jugador de su tipo premiado y el primer unánime de la década, con 9.0 de bWAR.',
     analysis: [
       'Bateó .257/.372/.592 con 46 jonrones y 26 bases robadas, y como lanzador ganó 9 juegos con 3.18 de efectividad y 156 ponches en 130.1 entradas. Vladimir Guerrero Jr. bateó .311/.401/.601 con 48 jonrones y 166 de wRC+ para unos Azulejos de 91 victorias, pero sumó 6.5. Ningún votado se acercó al valor total de Ohtani, aun con los Angelinos en 77-85.',
     ],

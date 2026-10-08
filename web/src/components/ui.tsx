@@ -60,7 +60,7 @@ export function PlayerCard({ c, showWar = true }: { c: Candidate; showWar?: bool
           {c.top5 ? <span className="rank-badge">{c.rank}</span> : null}
           <h3 style={{ margin: 0, color: 'var(--ink)' }}>{c.name}</h3>
         </div>
-        <div className="small muted" style={{ margin: '2px 0 6px' }}>{c.teamName} · {c.bio.pos === 'TWP' ? 'Dos vías' : c.bio.pos}</div>
+        <div className="small muted" style={{ margin: '2px 0 6px' }}>{c.teamName} · {c.bio.pos === 'TWP' ? 'DH/P' : c.bio.pos}</div>
         <TeamChip c={c} />
         <StatLine c={c} />
         {showWar ? <div className="statline"><span><b>{c.war.f}</b> <T k="fwar">fWAR</T></span><span><b>{c.war.b}</b> <T k="bwar">bWAR</T></span></div> : null}
@@ -123,11 +123,11 @@ export function QuoteCard({ q }: { q: QuoteData }) {
   return (
     <figure className="quote">
       <blockquote>
-        <p lang={q.es ? 'en' : 'es'}>«{q.text}»</p>
-        {q.es ? <p className="small muted">Traducción propia. {q.es}.</p> : null}
+        <p className="qtext" lang={q.es ? 'en' : 'es'}>{q.text.replace(/"([^"]+)"/g, '“$1”')}</p>
+        {q.es ? <p className="qes"><span>Traducción propia</span> {q.es}</p> : null}
       </blockquote>
       <figcaption>
-        <b>{q.author}</b>, {q.outlet}. <a href={q.url} target="_blank" rel="noreferrer">{q.title}</a>. {q.date}.
+        <b>{q.author}</b><span className="qsep">{q.outlet}</span><a href={q.url} target="_blank" rel="noreferrer">{q.title}</a><span className="qsep">{q.date}</span>
       </figcaption>
     </figure>
   )

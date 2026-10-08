@@ -272,3 +272,107 @@ export function MovementPlot({ movement, arsenal, title }: { movement: any[]; ar
     </div>
   )
 }
+
+/* ------------------------------------------------------------------ */
+/* Zona de strike vista desde el catcher, con dimensiones y 13 zonas      */
+/* ------------------------------------------------------------------ */
+const HW = 17 / 24 // mitad del home plate en pies (17 pulgadas de ancho)
+const ZB = 1.5
+const ZT = 3.5
+const OUTX = HW + 0.5
+const OUTB = ZB - 0.5
+const OUTT = ZT + 0.5
+
+export function StrikeZoneView({ location, arsenal, title }: { location: any[]; arsenal: any[]; title?: string }) {
+  const [ref, w0] = useWidth<HTMLDivElement>()
+  const [mode, setMode] = useState<'dots' | 'freq'>('dots')
+  const { show, hide, node } = useTip()
+  const w = Math.min(w0, 380)
+  const X0 = -1.8, X1 = 1.8, Z0 = -0.9, Z1 = 4.7
+  const h = Math.round((w * (Z1 - Z0)) / (X1 - X0))
+  const x = scaleLinear().domain([X0, X1]).range([0, w])
+  const y = scaleLinear().domain([Z0, Z1]).range([h, 0])
+  const colorOf = (code: string) => `var(--s${Math.min(5, arsenal.findIndex((a) => a.code === code) + 1)})`
+  const cw = (2 * HW) / 3
+  const ch = (ZT - ZB) / 3
+  const stats = useMemo(() => {
+    const cells = Array(9).fill(0)
+    let inZone = 0, outer = 0, away = 0
+    location.forEach((p) => {
+      const px = p[1], pz = p[2]
+      if (Math.abs(px) <= HW && pz >= ZB && pz <= ZT) {
+        inZone++
+        const col = Math.min(2, Math.floor((px + HW) / cw))
+        const row = Math.min(2, Math.floor((ZT - pz) / ch))
+        cells[row * 3 + col]++
+      } else if (Math.abs(px) <= OUTX && pz >= OUTB && pz <= OUTT) outer++
+      else away++
+    })
+    const n = Math.max(1, location.length)
+    return { cells, n, inZone, outer, away }
+  }, [location])
+  const maxCell = Math.max(1, ...stats.cells)
+  const pc = (v: number) => `${Math.round((v / stats.n) * 100)}%`
+  const outerLabels: [string, number, number][] = [['11', -OUTX / 2 - HW / 2, ZT + 0.25], ['12', OUTX / 2 + HW / 2, ZT + 0.25], ['13', -OUTX / 2 - HW / 2, ZB - 0.25], ['14', OUTX / 2 + HW / 2, ZB - 0.25]]
+  return (
+    <div className="chart" ref={ref}>
+      {title ? <ChartHead title={title} sub={`Vista del catcher · ${location.length} lanzamientos · pies`} /> : null}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+        <div className="tabs" role="group">
+          <button aria-pressed={mode === 'dots'} onClick={() => setMode('dots')}>Lanzamientos</button>
+          <button aria-pressed={mode === 'freq'} onClick={() => setMode('freq')}>Frecuencia por zona</button>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label={title} style={{ display: 'block', margin: '0 auto' }}>
+        {/* caja exterior de las 4 zonas de fuera (11 a 14) */}
+        <rect x={x(-OUTX)} y={y(OUTT)} width={x(OUTX) - x(-OUTX)} height={y(OUTB) - y(OUTT)} fill="var(--surface-2)" stroke="var(--axis)" strokeDasharray="4 3" />
+        <line x1={x(0)} x2={x(0)} y1={y(OUTT)} y2={y(OUTB)} stroke="var(--axis)" strokeDasharray="4 3" opacity={0.6} />
+        <line x1={x(-OUTX)} x2={x(OUTX)} y1={y(2.5)} y2={y(2.5)} stroke="var(--axis)" strokeDasharray="4 3" opacity={0.6} />
+        <g className="axis">
+          {outerLabels.map(([k, px, pz]) => <text key={k} x={x(px)} y={y(pz) + 4} textAnchor="middle" opacity={0.7}>{k}</text>)}
+        </g>
+        {/* zona de strike 3x3 */}
+        <rect x={x(-HW)} y={y(ZT)} width={x(HW) - x(-HW)} height={y(ZB) - y(ZT)} fill="var(--surface)" />
+        {stats.cells.map((c, i) => {
+          const col = i % 3, row = Math.floor(i / 3)
+          const cx = x(-HW + col * cw), cy = y(ZT - row * ch)
+          return (
+            <g key={i}>
+              <rect x={cx} y={cy} width={x(-HW + cw) - x(-HW)} height={y(ZB) - y(ZB + ch)} fill={mode === 'freq' ? 'var(--accent)' : 'none'} fillOpacity={mode === 'freq' ? 0.12 + 0.7 * (c / maxCell) : 0} stroke="var(--axis)" />
+              {mode === 'freq'
+                ? <text x={cx + (x(-HW + cw) - x(-HW)) / 2} y={cy + (y(ZB) - y(ZB + ch)) / 2 + 5} textAnchor="middle" fontWeight={800} fontSize={13} fill="var(--ink)">{pc(c)}</text>
+                : <text x={cx + 8} y={cy + 15} fontSize={10} fill="var(--muted)">{i + 1}</text>}
+            </g>
+          )
+        })}
+        <rect x={x(-HW)} y={y(ZT)} width={x(HW) - x(-HW)} height={y(ZB) - y(ZT)} fill="none" stroke="var(--ink)" strokeWidth={2} />
+        {/* home plate */}
+        <polygon points={[[-HW, 0], [HW, 0], [HW, -0.354], [0, -0.708], [-HW, -0.354]].map(([a, b]) => `${x(a)},${y(b)}`).join(' ')} fill="var(--surface)" stroke="var(--ink)" strokeWidth={1.5} />
+        {/* cotas */}
+        <g stroke="var(--muted)" fill="var(--muted)" fontSize={11}>
+          <line x1={x(-HW)} x2={x(HW)} y1={y(OUTT) - 10} y2={y(OUTT) - 10} />
+          <line x1={x(-HW)} x2={x(-HW)} y1={y(OUTT) - 14} y2={y(OUTT) - 6} /><line x1={x(HW)} x2={x(HW)} y1={y(OUTT) - 14} y2={y(OUTT) - 6} />
+          <text x={x(0)} y={y(OUTT) - 16} textAnchor="middle" stroke="none">17 in (43 cm)</text>
+          <line x1={x(OUTX) + 12} x2={x(OUTX) + 12} y1={y(ZT)} y2={y(ZB)} />
+          <line x1={x(OUTX) + 8} x2={x(OUTX) + 16} y1={y(ZT)} y2={y(ZT)} /><line x1={x(OUTX) + 8} x2={x(OUTX) + 16} y1={y(ZB)} y2={y(ZB)} />
+          <text x={x(OUTX) + 18} y={y(ZT) + 4} stroke="none">3.5 ft</text>
+          <text x={x(OUTX) + 18} y={y(ZB) + 4} stroke="none">1.5 ft</text>
+          <text x={x(OUTX) + 18} y={y(2.5) + 4} stroke="none">≈ 24 in</text>
+          <text x={x(0)} y={y(-0.708) + 14} textAnchor="middle" stroke="none">Home plate</text>
+        </g>
+        {mode === 'dots' ? location.map((p, i) => (
+          <circle key={i} cx={x(p[1])} cy={y(p[2])} r={2.8} fill={colorOf(p[0])} opacity={0.75} stroke="var(--surface)" strokeWidth={0.5}
+            onPointerMove={(e) => show(e, <div><b>{arsenal.find((a) => a.code === p[0])?.name}</b><br />Lateral {p[1]} ft · Altura {p[2]} ft</div>)} onPointerLeave={hide} />
+        )) : null}
+      </svg>
+      {mode === 'dots' ? <Legend items={arsenal.slice(0, 5).map((a, i) => ({ label: a.name, color: `var(--s${i + 1})` }))} /> : null}
+      <div className="statline" style={{ justifyContent: 'center', marginTop: 8 }}>
+        <span><b>{pc(stats.inZone)}</b> en la zona (1 a 9)</span>
+        <span><b>{pc(stats.outer)}</b> en el borde (11 a 14)</span>
+        <span><b>{pc(stats.away)}</b> lejos de la zona</span>
+      </div>
+      <div className="small muted" style={{ textAlign: 'center', marginTop: 6 }}>Las zonas 1 a 9 dividen la zona de strike en tres columnas de 5.7 in y tres filas de 8 in. Las zonas 11 a 14 son los cuadrantes de afuera. La altura real de la zona cambia con cada bateador, aquí se usa el promedio de 1.5 a 3.5 pies.</div>
+      {node}
+    </div>
+  )
+}

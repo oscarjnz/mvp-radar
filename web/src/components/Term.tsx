@@ -35,6 +35,7 @@ export function T({ k, children }: { k: string; children?: ReactNode }) {
   const e = GLOSSARY[k]
   const ref = useRef<HTMLSpanElement>(null)
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const quiet = useRef(false)
   if (!e) return <>{children}</>
 
   const show = () => {
@@ -45,6 +46,7 @@ export function T({ k, children }: { k: string; children?: ReactNode }) {
   const activate = (ev: { preventDefault: () => void; stopPropagation: () => void }) => {
     ev.preventDefault()
     ev.stopPropagation()
+    quiet.current = true
     setPos(null)
     open(k)
   }
@@ -52,7 +54,7 @@ export function T({ k, children }: { k: string; children?: ReactNode }) {
     <>
       <span
         ref={ref} className="term" role="button" tabIndex={0} aria-haspopup="dialog" aria-label={`${e.label}: ${e.short} Abrir explicación completa.`}
-        onPointerEnter={(ev) => ev.pointerType === 'mouse' && show()} onPointerLeave={() => setPos(null)} onFocus={show} onBlur={() => setPos(null)}
+        onPointerEnter={(ev) => ev.pointerType === 'mouse' && show()} onPointerLeave={() => setPos(null)} onFocus={() => { if (!quiet.current) show() }} onBlur={() => { quiet.current = false; setPos(null) }}
         onClick={activate} onKeyDown={(ev) => (ev.key === 'Enter' || ev.key === ' ') && activate(ev)}
       >
         {children ?? e.label}

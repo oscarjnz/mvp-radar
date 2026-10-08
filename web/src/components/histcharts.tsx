@@ -118,7 +118,10 @@ export function GapDumbbell({ rows }: { rows: { label: string; winner: string; w
   const rowH = 34
   const m = { l: 166, r: 24, t: 22, b: 8 }
   const h = m.t + m.b + rows.length * rowH
-  const x = scaleLinear().domain([3, 11]).range([m.l, w - m.r])
+  const all = rows.flatMap((r) => [r.winnerWar, r.snubWar])
+  const lo = Math.floor(Math.min(...all) - 0.5)
+  const hi = Math.ceil(Math.max(...all) + 0.5)
+  const x = scaleLinear().domain([lo, hi]).range([m.l + 12, w - m.r])
   return (
     <div className="chart" ref={ref}>
       <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label="Brecha de WAR entre el ganador y el que quedó fuera">

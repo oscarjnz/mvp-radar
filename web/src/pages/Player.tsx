@@ -5,7 +5,7 @@ import type { Candidate } from '../lib/types'
 import { fx, headshot, leagueName, signed, slash, teamLogo } from '../lib/format'
 import { ErrorBox, Loading, Section, Tabs, TeamChip, DataTable } from '../components/ui'
 import PercentileBars, { type PctRow } from '../components/PercentileBars'
-import { EvLaScatter, LineChart, MonthBars, MovementPlot, SprayChart, ZoneHeat } from '../components/charts'
+import { EvLaScatter, LineChart, MonthBars, MovementPlot, SprayChart, StrikeZoneView, ZoneHeat } from '../components/charts'
 import { rankVar } from '../components/chartkit'
 import { P, Li, K, Quote, T } from '../components/Term'
 
@@ -140,6 +140,7 @@ function PitchingSection({ c, d }: { c: Candidate; d: any }) {
         </div>
         <div className="card"><MovementPlot movement={d.movement} arsenal={d.arsenal} title="Movimiento de cada lanzamiento" /></div>
       </div>
+      {d.location?.length ? <div className="card" style={{ marginTop: 16 }}><StrikeZoneView location={d.location} arsenal={d.arsenal} title="Ubicación de cada lanzamiento" /></div> : null}
       <div className="card" style={{ marginTop: 16 }}>
         <h3>Arsenal</h3>
         <DataTable head={['Lanzamiento', 'Uso %', 'Vel.', 'Giro', 'Mov. H', 'Mov. V', 'Whiff %', 'CSW %', 'Putaway %', 'wOBA', 'xwOBA']}
@@ -213,7 +214,7 @@ function ProfileView({ p }: { p: Profile }) {
             <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.6rem)' }}>{p.name}</h1>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               {p.teamName ? <span className="chip"><img src={teamLogo(p.teamId)} alt="" width={16} height={16} /> {p.teamName}</span> : <span className="chip">Sin equipo en la actualidad</span>}
-              <span className="chip">{p.pos === 'TWP' ? 'Dos vías' : p.pos} · {p.bats}/{p.throws}</span>
+              <span className="chip">{p.pos === 'TWP' ? 'DH/P' : p.pos} · {p.bats}/{p.throws}</span>
               <span className="chip">{p.age} años · {p.height} · {p.weight} lb</span>
               <span className="chip">{p.city}, {p.country}</span>
               {p.debut ? <span className="chip">Debut en {p.debut.slice(0, 4)}</span> : null}
@@ -275,7 +276,7 @@ export default function Player() {
 
   return (
     <div className="wrap" style={style}>
-      <P className="small"><Link to="/carrera">← Carrera MVP 2026</Link></P>
+      <P className="small"><Link to="/carrera">← Carrera al MVP</Link></P>
       <div className="card">
         <div className="player-head">
           <img className="photo" src={headshot(c.id, 340)} alt={c.name} width={170} />
@@ -285,7 +286,7 @@ export default function Player() {
             <P className="lede" style={{ marginBottom: 10 }}>{c.narrative.tagline}</P>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <TeamChip c={c} />
-              <span className="chip">{b.pos === 'TWP' ? 'Dos vías' : b.pos} · {b.bats}/{b.throws}</span>
+              <span className="chip">{b.pos === 'TWP' ? 'DH/P' : b.pos} · {b.bats}/{b.throws}</span>
               <span className="chip">{b.age} años · {b.height} · {b.weight} lb</span>
               <span className="chip">{b.city}, {b.country}</span>
               {b.debut ? <span className="chip">Debut en {b.debut.slice(0, 4)}</span> : null}

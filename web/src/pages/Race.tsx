@@ -36,7 +36,7 @@ export default function Race() {
 
   return (
     <div className="wrap">
-      <div className="eyebrow">Carrera 2026</div>
+      <div className="eyebrow">Carrera al MVP</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Top 5 al MVP de la {leagueName(lg)}</h1>
       <P className="lede">Temporada regular cerrada el 27 de septiembre. Orden basado en WAR de dos fuentes, producción, impacto en juegos, equipo y disponibilidad. La foto y el nombre de cada jugador llevan a su perfil completo.</P>
       <Tabs value={lg} onChange={(v) => setSp({ liga: v })} options={[{ id: 'AL', label: 'Liga Americana' }, { id: 'NL', label: 'Liga Nacional' }]} />

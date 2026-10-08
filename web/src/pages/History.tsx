@@ -66,7 +66,7 @@ export default function History() {
 
       <div className="stat-tiles">
         <div className="tile"><div className="v">{s.hitters}</div><div className="l">MVP fueron bateadores</div></div>
-        <div className="tile"><div className="v">{s.twoWay}</div><div className="l">fueron de dos vías, todos Ohtani</div></div>
+        <div className="tile"><div className="v">{s.twoWay}</div><div className="l">fueron DH/P, todos de Ohtani</div></div>
         <div className="tile"><div className="v">{s.pitchers}</div><div className="l">lanzadores puros ganaron</div></div>
         <div className="tile"><div className="v">{s.unanimous}</div><div className="l">votaciones unánimes, todas desde 2021</div></div>
       </div>

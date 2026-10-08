@@ -14,7 +14,7 @@ export const teamLogo = (teamId: number | null | undefined) => (teamId ? `https:
 
 export const leagueName = (lg: string) => (lg === 'AL' ? 'Liga Americana' : 'Liga Nacional')
 
-export const roleName = (r: string) => (r === 'pitcher' ? 'Lanzador' : r === 'twoway' ? 'Dos vías' : 'Bateador')
+export const roleName = (r: string) => (r === 'pitcher' ? 'Lanzador' : r === 'twoway' ? 'DH/P' : 'Bateador')
 
 export const signed = (n: number | null | undefined, d = 1) => {
   if (n === null || n === undefined) return '-'

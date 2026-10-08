@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { ThemeProvider, useTheme } from './lib/theme'
 import Home from './pages/Home'
 import Race from './pages/Race'
@@ -9,14 +9,16 @@ import Voters from './pages/Voters'
 import Snubs from './pages/Snubs'
 import Method from './pages/Method'
 import Glossary from './pages/Glossary'
+import Leaders from './pages/Leaders'
 import { GlossaryProvider } from './components/Term'
 
 const TITLES: Record<string, string> = {
   '/': 'MVP Radar',
-  '/carrera': 'Carrera MVP 2026 · MVP Radar',
+  '/carrera': 'Carrera al MVP · MVP Radar',
   '/historial': 'Últimos 10 MVP · MVP Radar',
   '/que-premian': 'Qué premian los votantes · MVP Radar',
-  '/injusticias': 'Debió ser MVP · MVP Radar',
+  '/revision-del-voto': 'Revisión del voto · MVP Radar',
+  '/lideres': 'Líderes por departamento · MVP Radar',
   '/metodologia': 'Metodología · MVP Radar',
   '/glosario': 'Glosario · MVP Radar',
 }
@@ -40,10 +42,11 @@ function Header() {
           MVP Radar
         </NavLink>
         <nav className="nav" aria-label="Principal">
-          <NavLink to="/carrera">Carrera 2026</NavLink>
+          <NavLink to="/carrera">Carrera al MVP</NavLink>
           <NavLink to="/historial">Historial</NavLink>
           <NavLink to="/que-premian">Qué premian</NavLink>
-          <NavLink to="/injusticias">Debió ser MVP</NavLink>
+          <NavLink to="/revision-del-voto">Revisión del voto</NavLink>
+          <NavLink to="/lideres">Líderes</NavLink>
           <NavLink to="/glosario">Glosario</NavLink>
           <NavLink to="/metodologia">Metodología</NavLink>
         </nav>
@@ -67,7 +70,9 @@ export default function App() {
             <Route path="/jugador/:id" element={<Player />} />
             <Route path="/historial" element={<History />} />
             <Route path="/que-premian" element={<Voters />} />
-            <Route path="/injusticias" element={<Snubs />} />
+            <Route path="/revision-del-voto" element={<Snubs />} />
+            <Route path="/injusticias" element={<Navigate to="/revision-del-voto" replace />} />
+            <Route path="/lideres" element={<Leaders />} />
             <Route path="/metodologia" element={<Method />} />
             <Route path="/glosario" element={<Glossary />} />
             <Route path="*" element={<div className="wrap"><h1>Página no encontrada</h1><p><NavLink to="/">Volver al inicio</NavLink></p></div>} />

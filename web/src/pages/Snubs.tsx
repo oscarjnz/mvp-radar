@@ -46,8 +46,8 @@ export default function Snubs() {
 
   return (
     <div className="wrap">
-      <div className="eyebrow">Análisis de la votación</div>
-      <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Debió ser MVP</h1>
+      <div className="eyebrow">Auditoría de la votación</div>
+      <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Revisión del voto</h1>
       <P className="lede">Se revisaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones, {pit} de lanzadores y {sn.length - pit} de bateadores. Cada caso muestra al jugador frente al ganador, con los números que sostienen el argumento.</P>
 
       <Section title="La brecha de WAR" eyebrow="Panorama">

@@ -166,7 +166,7 @@ def _pca(s):
 def _ohtani(s):
     h, p = s["hit"], s["pit"]
     return {
-        "tagline": "Aun lesionado y con menos lanzamientos, sigue siendo el único jugador de dos vías.",
+        "tagline": "Aun lesionado y con menos lanzamientos, sigue siendo el único DH/P de élite.",
         "pros": [
             f"Como bateador, tuvo {h['avg']}/{h['obp']}/{h['slg']}, {_hr(h['hr'], 3)} y {h['wrcPlus']} de wRC+.",
             f"Como lanzador, terminó con {p['era']} de efectividad y {p['so']} ponches en {p['ip']} entradas antes de lesionarse.",
