@@ -117,6 +117,8 @@ export interface CandidatesData {
   season: number
   asOf: string
   status: string
+  award?: string
+  poll?: { outlet: string; voters: number; scale: string; note: string; panel?: Record<League, { name: string; pos: number; points: number; first: number }[]> }
   leagues: Record<League, { top5: Candidate[]; bubble: Candidate[] }>
   teams: Record<string, { abbr: string; name: string; lg: League } & Partial<TeamRec>>
 }
@@ -157,9 +159,11 @@ export interface HistLeague {
   unanimous: boolean
   top10: Ballot[]
   voted: number
+  winnerRanks?: { era: number | null; wins: number | null; so: number | null; ip: number | null; war: number | null }
 }
 
 export interface HistoryData {
+  award?: string
   seasons: ({ year: number } & Record<League, HistLeague>)[]
   snubs: any[]
   nearMisses: any[]

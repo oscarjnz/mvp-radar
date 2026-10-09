@@ -6,9 +6,16 @@ import { CoefBars, VoteScatter } from '../components/histcharts'
 import { LineChart } from '../components/charts'
 import { L, Li, P } from '../components/Term'
 import { NOTE_2020, QUOTES } from '../data/histStory'
+import { AwardSwitch, useAward } from '../lib/award'
+import VotersCy from './VotersCy'
 
 export default function Voters() {
-  const { data, error } = useHistory()
+  const { award } = useAward()
+  return award === 'cy' ? <VotersCy /> : <VotersMvp />
+}
+
+function VotersMvp() {
+  const { data, error } = useHistory('mvp')
   if (error) return <div className="wrap"><ErrorBox msg={error} /></div>
   if (!data) return <div className="wrap"><Loading h={500} /></div>
   const s = data.summary
@@ -23,6 +30,7 @@ export default function Voters() {
 
   return (
     <div className="wrap">
+      <AwardSwitch />
       <div className="eyebrow">Criterios de la votación</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Qué premian los votantes</h1>
       <P className="lede">El análisis cubre las {reg.n} participaciones de finalistas en las boletas de 2016 a 2025. El WAR es el factor que más pesa, llegar a playoffs ayuda y los jonrones se notan, pero ningún lanzador ha ganado en ese periodo.</P>

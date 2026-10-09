@@ -1,6 +1,6 @@
 import { max, scaleLinear } from 'd3'
 import type { Candidate } from '../lib/types'
-import { CRITERIA, type Components, type Criterion, type Weights } from '../lib/scoring'
+import { CRITERIA } from '../lib/scoring'
 import { ChartHead, Legend, rankVar, useTip, useWidth } from './chartkit'
 
 const short = (n: string) => {
@@ -122,10 +122,14 @@ export function WarParts({ cands, title }: { cands: Candidate[]; title?: string 
   )
 }
 
-/* Laboratorio: contribuciones apiladas por criterio */
-const CRIT_COLORS: Record<Criterion, string> = { value: 'var(--s1)', production: 'var(--s2)', team: 'var(--s3)', availability: 'var(--s4)', position: 'var(--s5)' }
+/* Laboratorio: contribuciones apiladas por criterio. Sirve para el MVP y para el Cy Young. */
+const PALETTE = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)']
 
-export function LabBars({ rows, weights }: { rows: { c: Candidate; comp: Components; score: number }[]; weights: Weights }) {
+export function LabBars({ rows, weights, criteria = CRITERIA }: {
+  rows: { c: Candidate; comp: Record<string, number>; score: number }[]
+  weights: Record<string, number>
+  criteria?: { key: string; label: string }[]
+}) {
   const [ref, w] = useWidth<HTMLDivElement>()
   const { show, hide, node } = useTip()
   const rowH = 34
@@ -133,6 +137,7 @@ export function LabBars({ rows, weights }: { rows: { c: Candidate; comp: Compone
   const h = m.t + m.b + rows.length * rowH
   const total = Object.values(weights).reduce((a, b) => a + b, 0) || 1
   const x = scaleLinear().domain([0, 100]).range([m.l, w - m.r])
+  const color = (key: string) => PALETTE[criteria.findIndex((c) => c.key === key) % PALETTE.length]
   return (
     <div className="chart" ref={ref}>
       <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label="Ranking según tus pesos">
@@ -140,20 +145,105 @@ export function LabBars({ rows, weights }: { rows: { c: Candidate; comp: Compone
           let acc = 0
           const yy = m.t + i * rowH
           return (
-            <g key={r.c.id} onPointerMove={(e) => show(e, <div><b>{r.c.name}</b> · puntaje <b>{r.score.toFixed(1)}</b>{CRITERIA.map((cr) => <div key={cr.key}>{cr.label} <b>{r.comp[cr.key].toFixed(0)}</b>/100</div>)}</div>)} onPointerLeave={hide}>
+            <g key={r.c.id} onPointerMove={(e) => show(e, <div><b>{r.c.name}</b> · puntaje <b>{r.score.toFixed(1)}</b>{criteria.map((cr) => <div key={cr.key}>{cr.label} <b>{r.comp[cr.key].toFixed(0)}</b>/100</div>)}</div>)} onPointerLeave={hide}>
               <text x={m.l - 8} y={yy + 21} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: 650 }}>{i + 1}. {short(r.c.name)}</text>
-              {CRITERIA.map((cr) => {
+              {criteria.map((cr) => {
                 const part = (r.comp[cr.key] * weights[cr.key]) / total
                 const x0 = x(acc)
                 acc += part
-                return part > 0 ? <rect key={cr.key} x={x0} y={yy + 6} width={Math.max(0, x(acc) - x0 - 2)} height={rowH - 12} rx={3} fill={CRIT_COLORS[cr.key]} /> : null
+                return part > 0 ? <rect key={cr.key} x={x0} y={yy + 6} width={Math.max(0, x(acc) - x0 - 2)} height={rowH - 12} rx={3} fill={color(cr.key)} /> : null
               })}
               <text x={x(acc) + 6} y={yy + 21} style={{ fill: 'var(--ink)', fontWeight: 800 }}>{r.score.toFixed(0)}</text>
             </g>
           )
         })}
       </svg>
-      <Legend items={CRITERIA.map((c) => ({ label: c.label, color: CRIT_COLORS[c.key] }))} />
+      <Legend items={criteria.map((c) => ({ label: c.label, color: color(c.key) }))} />
+      {node}
+    </div>
+  )
+}
+
+/* Cy Young: efectividad frente a FIP. Debajo de la diagonal, el lanzador rindió mejor que su FIP. */
+export function EraFip({ cands, title }: { cands: Candidate[]; title?: string }) {
+  const [ref, w] = useWidth<HTMLDivElement>()
+  const { show, hide, node } = useTip()
+  const h = Math.round(Math.min(380, w * 0.72))
+  const m = { l: 42, r: 66, t: 14, b: 38 }
+  const pts = cands.filter((c) => c.pit)
+  const lo = Math.floor(Math.min(...pts.map((c) => Math.min(parseFloat(c.pit!.era), c.pit!.fip))) * 2 - 0.5) / 2
+  const hi = Math.ceil(Math.max(...pts.map((c) => Math.max(parseFloat(c.pit!.era), c.pit!.fip))) * 2 + 0.5) / 2
+  const x = scaleLinear().domain([lo, hi]).range([m.l, w - m.r])
+  const y = scaleLinear().domain([lo, hi]).range([h - m.b, m.t])
+  return (
+    <div className="chart" ref={ref}>
+      {title ? <ChartHead title={title} sub="Debajo de la línea, la efectividad fue mejor que el FIP. Encima, peor" /> : null}
+      <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label={title}>
+        <g className="grid">{y.ticks(5).map((t) => <line key={t} x1={m.l} x2={w - m.r} y1={y(t)} y2={y(t)} />)}{x.ticks(5).map((t) => <line key={t} x1={x(t)} x2={x(t)} y1={m.t} y2={h - m.b} />)}</g>
+        <line x1={x(lo)} y1={y(lo)} x2={x(hi)} y2={y(hi)} stroke="var(--axis)" strokeDasharray="4 4" />
+        <g className="axis">
+          {y.ticks(5).map((t) => <text key={t} x={m.l - 6} y={y(t) + 4} textAnchor="end">{t.toFixed(1)}</text>)}
+          {x.ticks(5).map((t) => <text key={t} x={x(t)} y={h - 20} textAnchor="middle">{t.toFixed(1)}</text>)}
+          <text x={(m.l + w - m.r) / 2} y={h - 4} textAnchor="middle">FIP</text>
+          <text transform={`translate(10 ${h / 2}) rotate(-90)`} textAnchor="middle">Efectividad (ERA)</text>
+        </g>
+        {pts.map((c) => {
+          const col = c.top5 ? rankVar(c.rank) : 'var(--muted)'
+          const era = parseFloat(c.pit!.era)
+          const cx = x(c.pit!.fip)
+          const cy = y(era)
+          return (
+            <g key={c.id} onPointerMove={(e) => show(e, <div><b>{c.name}</b> ({c.team})<br />ERA <b>{c.pit!.era}</b> · FIP <b>{c.pit!.fip}</b><br />{era < c.pit!.fip ? `ERA ${(c.pit!.fip - era).toFixed(2)} mejor que su FIP` : `ERA ${(era - c.pit!.fip).toFixed(2)} peor que su FIP`}</div>)} onPointerLeave={hide}>
+              <circle cx={cx} cy={cy} r={c.top5 ? 8 : 6} fill={col} stroke="var(--surface)" strokeWidth={2} opacity={c.top5 ? 1 : 0.7} />
+              <text x={cx + 12} y={cy + 4} style={{ fill: 'var(--ink)', fontWeight: c.top5 ? 700 : 500, fontSize: 11 }}>{short(c.name)}</text>
+            </g>
+          )
+        })}
+      </svg>
+      {node}
+    </div>
+  )
+}
+
+/* Cy Young: perfil de dominio con porcentajes de Savant (ponches, bases por bolas, swings fallados, persecución) */
+export function PitchProfile({ cands, title }: { cands: Candidate[]; title?: string }) {
+  const [ref, w] = useWidth<HTMLDivElement>()
+  const { show, hide, node } = useTip()
+  const pitchers = cands.filter((c) => c.pit && c.pit.savant?.raw?.k_percent !== undefined)
+  const parts: { k: string; l1: string; l2: string }[] = [
+    { k: 'k_percent', l1: 'Ponches', l2: '%' },
+    { k: 'bb_percent', l1: 'Bases por', l2: 'bolas %' },
+    { k: 'whiff_percent', l1: 'Swings', l2: 'fallados %' },
+    { k: 'oz_swing_percent', l1: 'Persecución', l2: 'fuera de zona' },
+  ]
+  const bandH = 22
+  const groupH = pitchers.length * bandH + 16
+  const m = { l: 92, r: 40, t: 12, b: 8 }
+  const h = m.t + m.b + parts.length * groupH
+  const lim = Math.ceil(Math.max(...pitchers.flatMap((c) => parts.map((p) => c.pit!.savant.raw[p.k] ?? 0))) / 5) * 5 || 10
+  const x = scaleLinear().domain([0, lim]).range([m.l, w - m.r])
+  return (
+    <div className="chart" ref={ref}>
+      {title ? <ChartHead title={title} sub="Porcentajes de Baseball Savant. Menos bases por bolas es mejor" /> : null}
+      <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label={title}>
+        <g className="grid">{x.ticks(5).map((t) => <line key={t} x1={x(t)} x2={x(t)} y1={m.t} y2={h - m.b} />)}</g>
+        {parts.map((p, gi) => (
+          <g key={p.k} transform={`translate(0 ${m.t + gi * groupH})`}>
+            <text x={4} y={groupH / 2 - 4} style={{ fill: 'var(--ink)', fontWeight: 700, fontSize: 11 }}>{p.l1}</text>
+            <text x={4} y={groupH / 2 + 9} style={{ fill: 'var(--ink)', fontWeight: 700, fontSize: 11 }}>{p.l2}</text>
+            {pitchers.map((c, i) => {
+              const v = c.pit!.savant.raw[p.k] as number
+              return (
+                <g key={c.id} onPointerMove={(e) => show(e, <div><b>{c.name}</b><br />{p.l1} {p.l2} <b>{v}</b></div>)} onPointerLeave={hide}>
+                  <rect x={x(0)} y={i * bandH + 4} width={Math.max(2, x(v) - x(0))} height={bandH - 6} rx={3} fill={rankVar(c.rank)} />
+                  <text x={x(v) + 4} y={i * bandH + 16} style={{ fontSize: 10 }}>{v}</text>
+                </g>
+              )
+            })}
+          </g>
+        ))}
+      </svg>
+      <Legend items={pitchers.map((c) => ({ label: short(c.name), color: rankVar(c.rank) }))} />
       {node}
     </div>
   )

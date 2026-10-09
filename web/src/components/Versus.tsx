@@ -59,8 +59,11 @@ function buildRows(people: Person[]): Row[] {
   if (anyPit) {
     rows.push(
       { label: 'ERA', get: (p) => (p.pit ? p.pit.era : null), best: 'min', num: (p) => n(p.pit?.era) },
+      { label: 'Récord del lanzador', get: (p) => (p.pit && p.pit.w !== null && p.pit.w !== undefined && p.pit.l !== null && p.pit.l !== undefined ? `${p.pit.w}-${p.pit.l}` : null), best: 'max', num: (p) => n(p.pit?.w) },
+      { label: 'ERA+', get: (p) => p.pit?.eraPlus, best: 'max', num: (p) => n(p.pit?.eraPlus) },
       { label: 'Entradas', get: (p) => (p.pit ? p.pit.ip : null), best: 'max', num: (p) => n(p.pit?.ip) },
       { label: 'Ponches', get: (p) => (p.pit ? p.pit.so : null), best: 'max', num: (p) => n(p.pit?.so) },
+      { label: 'Bases por bolas', get: (p) => p.pit?.bb, best: 'min', num: (p) => n(p.pit?.bb) },
       { label: 'FIP', get: (p) => p.fip, best: 'min', num: (p) => p.fip },
       { label: 'WHIP', get: (p) => (p.pit ? p.pit.whip : null), best: 'min', num: (p) => n(p.pit?.whip) },
     )

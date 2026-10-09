@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCompare, useHistory, useProfiles } from '../lib/data'
 import { slash } from '../lib/format'
+import { AwardSwitch, useAward } from '../lib/award'
 import { Callout, DataTable, ErrorBox, Face, Loading, NameLink, Section } from '../components/ui'
 import { GapDumbbell } from '../components/histcharts'
 import Versus from '../components/Versus'
@@ -23,6 +24,12 @@ const WHY: Record<string, string> = {
 
 const first = (n: string) => n.split(' ').slice(-1)[0]
 
+function cyText(x: any) {
+  const p = x.pit ?? {}
+  const wp = x.winnerPit ?? {}
+  return `${x.name} (${x.team}) tuvo ${p.w}-${p.l} de récord, ${p.era} de efectividad, ${p.ip} entradas y ${p.so} ponches. Sumó ${x.war} de bWAR, ${x.warGap} más que ${first(x.winner)}, y terminó ${x.voteRank}.º con ${x.share}% del voto. El ganador tuvo ${wp.w}-${wp.l} con ${wp.era} de efectividad en ${wp.ip} entradas.`
+}
+
 function genericText(x: any) {
   if (x.role === 'pitcher') {
     return `${x.name} (${x.team}, ${x.w}-${x.l}) terminó con ${x.pit?.era} de efectividad en ${x.pit?.ip} entradas y ${x.pit?.so} ponches. Sumó ${x.war} de bWAR, ${x.warGap} más que ${first(x.winner)}, y quedó ${x.voteRank}.º con ${x.share}% del voto.`
@@ -31,6 +38,9 @@ function genericText(x: any) {
 }
 
 export default function Snubs() {
+  const { award } = useAward()
+  const cy = award === 'cy'
+  const prize = cy ? 'Cy Young' : 'MVP'
   const { data, error } = useHistory()
   const compare = useCompare()
   const profiles = useProfiles()
@@ -43,15 +53,24 @@ export default function Snubs() {
     label: `${x.year} ${x.lg} · ${first(x.name)}`, winner: first(x.winner), winnerWar: x.winnerWar, snub: x.name, snubWar: x.war, rank: x.voteRank,
   }))
   const pit = sn.filter((x: any) => x.role === 'pitcher').length
+  // Lecturas de los casos del Cy Young, calculadas de los datos
+  const top3 = [...sn].sort((a: any, b: any) => b.warGap - a.warGap).slice(0, 3)
+  const moreWins = sn.filter((x: any) => (x.winnerPit?.w ?? 0) > (x.pit?.w ?? 0)).length
+  const offPlayoffs = sn.filter((x: any) => x.playoffs === false).length
 
   return (
     <div className="wrap">
+      <AwardSwitch />
       <div className="eyebrow">Auditoría de la votación</div>
       <h1 style={{ fontSize: 'clamp(1.8rem,4vw,2.8rem)' }}>Revisión del voto</h1>
-      <P className="lede">Se revisaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones, {pit} de lanzadores y {sn.length - pit} de bateadores. Cada caso muestra al jugador frente al ganador, con los números que sostienen el argumento.</P>
+      {cy ? (
+        <P className="lede">Se revisaron todos los finalistas del Cy Young de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones. Cada caso muestra al lanzador frente al ganador, con los números que sostienen el argumento.</P>
+      ) : (
+        <P className="lede">Se revisaron todos los finalistas de 2016 a 2025 con al menos 0.5 de WAR más que el ganador. Son {sn.length} casos en 20 votaciones, {pit} de lanzadores y {sn.length - pit} de bateadores. Cada caso muestra al jugador frente al ganador, con los números que sostienen el argumento.</P>
+      )}
 
       <Section title="La brecha de WAR" eyebrow="Panorama">
-        <div className="card"><GapDumbbell rows={rows} /></div>
+        <div className="card"><GapDumbbell rows={rows} winnerLabel={`Ganó el ${prize}`} /></div>
         <P className="small muted" style={{ marginTop: 8 }}>WAR de Baseball Reference. Un WAR más alto no siempre significa un mejor jugador, pero si el premio se define por valor, esta es la contradicción que hay que explicar.</P>
       </Section>
 
@@ -59,7 +78,7 @@ export default function Snubs() {
         <div className="grid" style={{ gap: 18 }}>
           {sn.map((x: any) => {
             const key = `${x.year}-${x.lg}`
-            const custom = WHY[`${x.year}-${x.name}`]
+            const custom = cy ? undefined : WHY[`${x.year}-${x.name}`]
             const cmp = compare.data ? compare.data[key] : null
             const rival = cmp ? cmp.rivals.find((r: any) => r.name === x.name) : null
             const sid = x.mlbId ?? rival?.mlbId
@@ -80,10 +99,10 @@ export default function Snubs() {
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <Face id={wid} name={x.winner} width={72} color="var(--s1)" />
-                    <div className="small muted" style={{ marginTop: 4 }}>MVP</div>
+                    <div className="small muted" style={{ marginTop: 4 }}>{prize}</div>
                   </div>
                 </div>
-                <P style={{ marginTop: 12 }}>{custom || genericText(x)}</P>
+                <P style={{ marginTop: 12 }}>{custom || (cy ? cyText(x) : genericText(x))}</P>
                 {x.year === 2020 ? <P className="small muted">Temporada de 60 juegos. Consulta la nota sobre 2020 en el historial.</P> : null}
                 <details className="tbl" style={{ marginTop: 6 }}>
                   <summary>Ver la comparación completa</summary>
@@ -108,11 +127,19 @@ export default function Snubs() {
 
       <Section title="Conclusiones" eyebrow="Lo que muestran los casos">
         <div className="card">
+          {cy ? (
+            <ul className="clean">
+              <li><b>Las mayores brechas.</b> {top3.map((x: any) => `${x.name} en ${x.year} (${x.warGap} más de WAR que ${first(x.winner)})`).join(', ')}.</li>
+              <li><b>El récord ayudó al ganador.</b> En {moreWins} de los {sn.length} casos, el ganador tuvo más victorias que el finalista con más WAR.</li>
+              <li><b>Los playoffs no explican todo.</b> {offPlayoffs} de los {sn.length} finalistas con más WAR jugaron en equipos que no llegaron a octubre.</li>
+            </ul>
+          ) : (
           <ul className="clean">
             <li><b>El pitcheo es el gran perdedor.</b> Los tres mayores huecos de WAR de la década (deGrom, Nola y Wheeler) son de lanzadores.</li>
             <li><b>El nombre y el equipo pesan.</b> Trout en 2019, Harper en 2021 y Ohtani en 2021 y 2023 ganaron frente a rivales con más WAR o con un equipo mejor.</li>
             <li><b>El WAR no cierra el debate.</b> En 2026, McGonigle tiene 7.1 de bWAR y 5.4 de fWAR, la misma temporada con dos lecturas distintas. <Link to="/carrera">Consulta la carrera actual</Link>.</li>
           </ul>
+          )}
         </div>
       </Section>
     </div>

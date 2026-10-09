@@ -311,3 +311,8 @@ button.chip[aria-pressed='false'] { opacity: 0.45; }
 .zread { margin: 10px 0 0; padding-left: 18px; font-size: 0.9rem; color: var(--ink-2); }
 .zread li { margin: 4px 0; }
 .zread b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* selector de premio */
+.awsw { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+.awsw-l { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800; color: var(--muted); }
+.awsw .tabs button { padding: 6px 14px; }

@@ -118,14 +118,15 @@ def row_to_ballot(r, lg, year, st, po_ids):
         "pts": fnum(r.get("points_won")),
         "first": fnum(r.get("votes_first")),
         "share": fnum(r.get("share")),
-        "war": fnum(r.get("WAR")),
+        "war": fnum(r.get("WAR") if r.get("WAR") is not None else r.get("WAR_pitch")),
         "role": "twoway" if (pitcher and hitter) else ("pitcher" if pitcher else "hitter"),
         "bat": {"g": fnum(r.get("G")), "r": fnum(r.get("R")), "h": fnum(r.get("H")), "hr": fnum(r.get("HR")),
                 "rbi": fnum(r.get("RBI")), "sb": fnum(r.get("SB")), "bb": fnum(r.get("BB")),
                 "avg": r.get("batting_avg"), "obp": r.get("onbase_perc"), "slg": r.get("slugging_perc"),
                 "ops": r.get("onbase_plus_slugging")} if hitter else None,
         "pit": {"w": fnum(r.get("W")), "l": fnum(r.get("L")), "era": r.get("earned_run_avg"), "whip": r.get("whip"),
-                "ip": ip, "so": fnum(r.get("SO_p") or r.get("SO")), "sv": fnum(r.get("SV"))} if pitcher else None,
+                "ip": ip, "so": fnum(r.get("SO_p") or r.get("SO")), "sv": fnum(r.get("SV")), "gs": fnum(r.get("GS")),
+                "bb": fnum(r.get("BB_p")), "hr": fnum(r.get("HR_p")), "eraPlus": fnum(r.get("earned_run_avg_plus"))} if pitcher else None,
     }
 
 

@@ -16,6 +16,7 @@ from html.parser import HTMLParser
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(ROOT, "data", "raw")
 OUT = os.path.join(ROOT, "data", "mvp_history_raw.json")
+CYA_OUT = os.path.join(ROOT, "data", "cya_history_raw.json")
 TOOL_RESULTS = os.path.expanduser(r"~/.claude/projects/C--Users-oscar/*/tool-results/mcp-firecrawl-firecrawl_scrape-*.txt")
 
 
@@ -102,7 +103,8 @@ def uncomment(html):
     return re.sub(r"<!--(.*?)-->", lambda m: m.group(1), html, flags=re.S)
 
 
-def parse_year(year):
+def parse_year(year, award="MVP"):
+    """award: 'MVP' o 'CYA' (Cy Young). Las tablas se llaman AL_MVP_voting, NL_CYA_voting, etc."""
     path = os.path.join(RAW, f"bbref_awards_{year}.html")
     with open(path, encoding="utf-8") as fh:
         raw = fh.read()
@@ -111,7 +113,7 @@ def parse_year(year):
         rows = []
         # las tablas de votacion estan a la vista; solo si no aparecen se busca dentro de comentarios
         for html in (raw, uncomment(raw)):
-            g = TableGrabber(f"{lg}_MVP_voting")
+            g = TableGrabber(f"{lg}_{award}_voting")
             g.feed(html)
             rows = [r for r in g.rows if r.get("player") not in (None, "Name")]
             if rows:
@@ -128,14 +130,15 @@ def main():
         for f in os.listdir(RAW)
         if f.startswith("bbref_awards_")
     )
-    result = {}
-    for y in years:
-        parsed = parse_year(y)
-        result[str(y)] = parsed
-        print(y, {lg: len(rows) for lg, rows in parsed.items()}, "top:", [r.get("player") or r.get("name_display") for lg in parsed for r in parsed[lg][:1]])
-    with open(OUT, "w", encoding="utf-8") as fh:
-        json.dump(result, fh, ensure_ascii=False, indent=1)
-    print("escrito", OUT)
+    for award, dest in (("MVP", OUT), ("CYA", CYA_OUT)):
+        result = {}
+        for y in years:
+            parsed = parse_year(y, award)
+            result[str(y)] = parsed
+            print(award, y, {lg: len(rows) for lg, rows in parsed.items()}, "top:", [r.get("player") or r.get("name_display") for lg in parsed for r in parsed[lg][:1]])
+        with open(dest, "w", encoding="utf-8") as fh:
+            json.dump(result, fh, ensure_ascii=False, indent=1)
+        print("escrito", dest)
 
 
 if __name__ == "__main__":

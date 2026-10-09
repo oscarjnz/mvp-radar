@@ -9,7 +9,7 @@ const last = (n: string) => {
 }
 
 /* WAR vs porcentaje de voto de todos los finalistas */
-export function VoteScatter({ points, title }: { points: { year: number; lg: string; b: Ballot; winner: boolean }[]; title?: string }) {
+export function VoteScatter({ points, title, award = 'MVP' }: { points: { year: number; lg: string; b: Ballot; winner: boolean }[]; title?: string; award?: string }) {
   const [ref, w] = useWidth<HTMLDivElement>()
   const { show, hide, node } = useTip()
   const h = Math.round(Math.min(420, w * 0.72))
@@ -33,13 +33,13 @@ export function VoteScatter({ points, title }: { points: { year: number; lg: str
             onPointerMove={(e) => show(e, <div><b>{p.b.name}</b> · {p.year} {p.lg}<br />WAR <b>{p.b.war}</b> · voto <b>{p.b.share}%</b><br />{p.b.team} {p.b.w}-{p.b.l} {p.b.playoffs ? '· playoffs' : '· sin playoffs'}</div>)} onPointerLeave={hide} />
         ))}
         {points.filter((p) => p.winner).map((p, i) => (
-          <g key={i} onPointerMove={(e) => show(e, <div><b>{p.b.name}</b> · MVP {p.year} {p.lg}<br />WAR <b>{p.b.war}</b> · voto <b>{p.b.share}%</b><br />{p.b.team} {p.b.w}-{p.b.l} {p.b.playoffs ? '· playoffs' : '· sin playoffs'}</div>)} onPointerLeave={hide}>
+          <g key={i} onPointerMove={(e) => show(e, <div><b>{p.b.name}</b> · {award} {p.year} {p.lg}<br />WAR <b>{p.b.war}</b> · voto <b>{p.b.share}%</b><br />{p.b.team} {p.b.w}-{p.b.l} {p.b.playoffs ? '· playoffs' : '· sin playoffs'}</div>)} onPointerLeave={hide}>
             <circle cx={x(p.b.war)} cy={y(p.b.share)} r={7} fill={p.b.playoffs ? 'var(--s1)' : 'var(--s2)'} stroke="var(--ink)" strokeWidth={2.5} />
           </g>
         ))}
       </svg>
       <Legend items={[{ label: 'Equipo en playoffs', color: 'var(--s1)' }, { label: 'Equipo fuera de playoffs', color: 'var(--s2)' }]} />
-      <p className="small muted" style={{ margin: '6px 0 0' }}>Los círculos con borde grueso son los 20 MVP.</p>
+      <p className="small muted" style={{ margin: '6px 0 0' }}>Los círculos con borde grueso son los 20 {award}.</p>
       {node}
     </div>
   )
@@ -82,7 +82,7 @@ export function CoefBars({ coefs, halves }: { coefs: { label: string; value: num
 }
 
 /* Boleta de un año y liga */
-export function BallotBars({ ballots, title }: { ballots: Ballot[]; title?: string }) {
+export function BallotBars({ ballots, title, hideRole = false }: { ballots: Ballot[]; title?: string; hideRole?: boolean }) {
   const [ref, w] = useWidth<HTMLDivElement>()
   const { show, hide, node } = useTip()
   const rowH = 30
@@ -97,7 +97,7 @@ export function BallotBars({ ballots, title }: { ballots: Ballot[]; title?: stri
           const yy = m.t + i * rowH
           return (
             <g key={b.name} onPointerMove={(e) => show(e, <div><b>{b.name}</b> ({b.team})<br />Puntos <b>{b.pts}</b> · votos de 1.er lugar <b>{b.first}</b><br />WAR <b>{b.war}</b> · {b.w}-{b.l} {b.playoffs ? '· playoffs' : '· sin playoffs'}</div>)} onPointerLeave={hide}>
-              <text x={m.l - 8} y={yy + 19} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: i === 0 ? 800 : 500 }}>{b.rank}. {last(b.name)}{b.role !== 'hitter' ? ` (${b.role === 'pitcher' ? 'P' : 'P/DH'})` : ''}</text>
+              <text x={m.l - 8} y={yy + 19} textAnchor="end" style={{ fill: 'var(--ink)', fontWeight: i === 0 ? 800 : 500 }}>{b.rank}. {last(b.name)}{!hideRole && b.role !== 'hitter' ? ` (${b.role === 'pitcher' ? 'P' : 'P/DH'})` : ''}</text>
               <rect x={m.l} y={yy + 5} width={x(100) - m.l} height={rowH - 11} rx={4} fill="var(--grid)" />
               <rect x={m.l} y={yy + 5} width={Math.max(2, x(b.share) - m.l)} height={rowH - 11} rx={4} fill={i === 0 ? 'var(--s1)' : 'var(--axis)'} />
               <text x={w - m.r + 8} y={yy + 19} style={{ fill: 'var(--ink)', fontWeight: 700 }}>{b.share}% · {b.war}</text>
@@ -112,7 +112,7 @@ export function BallotBars({ ballots, title }: { ballots: Ballot[]; title?: stri
 }
 
 /* Brecha de WAR: ganador vs el que lo supero */
-export function GapDumbbell({ rows }: { rows: { label: string; winner: string; winnerWar: number; snub: string; snubWar: number; rank: number }[] }) {
+export function GapDumbbell({ rows, winnerLabel = 'Ganó el MVP' }: { rows: { label: string; winner: string; winnerWar: number; snub: string; snubWar: number; rank: number }[]; winnerLabel?: string }) {
   const [ref, w] = useWidth<HTMLDivElement>()
   const { show, hide, node } = useTip()
   const rowH = 34
@@ -139,7 +139,7 @@ export function GapDumbbell({ rows }: { rows: { label: string; winner: string; w
           )
         })}
       </svg>
-      <Legend items={[{ label: 'Ganó el MVP', color: 'var(--s1)' }, { label: 'Tuvo más WAR y no ganó', color: 'var(--s2)' }]} />
+      <Legend items={[{ label: winnerLabel, color: 'var(--s1)' }, { label: 'Tuvo más WAR y no ganó', color: 'var(--s2)' }]} />
       {node}
     </div>
   )

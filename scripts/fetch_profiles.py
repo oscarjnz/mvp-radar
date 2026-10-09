@@ -7,7 +7,7 @@ import sys
 import time
 import urllib.request
 
-from candidates import all_candidates
+from candidates import all_people
 from common import RAW
 
 FORCE = "--force" in sys.argv
@@ -35,7 +35,7 @@ def main():
             for r in pool[lg][kind]:
                 ids.setdefault((r["name"], "hitter" if kind == "hitters" else "pitcher"), r["id"])
     seen = set()
-    for lg, rank, name, role, top in all_candidates():
+    for _lg, name, role in all_people():
         groups = []
         if role in ("hitter", "twoway"):
             groups.append(("hitter", "hitting"))

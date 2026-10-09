@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CandidatesData, HistoryData, PlayerDetail } from './types'
+import { AWARDS, useAward, type AwardId } from './award'
 
 const cache = new Map<string, Promise<any>>()
 
@@ -34,8 +35,14 @@ export function useAsync<T>(path: string | null) {
   return { data, error }
 }
 
-export const useCandidates = () => useAsync<CandidatesData>('/data/candidates.json')
-export const useHistory = () => useAsync<HistoryData>('/data/history.json')
+/** Los datos de cada premio viven en archivos paralelos (candidates.json y candidates_cy.json, etc.). Sin argumento se usa el premio elegido. */
+function useFile(base: string, award?: AwardId) {
+  const current = useAward().award
+  return `/data/${base}${AWARDS[award ?? current].suffix}.json`
+}
+
+export const useCandidates = (award?: AwardId) => useAsync<CandidatesData>(useFile('candidates', award))
+export const useHistory = (award?: AwardId) => useAsync<HistoryData>(useFile('history', award))
 export const usePlayer = (id: number | string | null) => useAsync<PlayerDetail>(id ? `/data/players/${id}.json` : null)
 
 export interface Profile {
@@ -57,8 +64,9 @@ export interface Profile {
   active: boolean
   awards: Record<string, string[]>
   seasons: any[]
+  cySeasons?: any[]
   links: { mlb: string; savant: string; bbref: string }
 }
 
-export const useCompare = () => useAsync<Record<string, any>>('/data/compare.json')
+export const useCompare = (award?: AwardId) => useAsync<Record<string, any>>(useFile('compare', award))
 export const useProfiles = () => useAsync<Record<string, Profile>>('/data/profiles.json')

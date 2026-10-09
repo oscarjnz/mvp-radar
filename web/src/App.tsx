@@ -11,29 +11,34 @@ import Method from './pages/Method'
 import Glossary from './pages/Glossary'
 import Leaders from './pages/Leaders'
 import { GlossaryProvider } from './components/Term'
+import { AWARDS, AwardProvider, useAward } from './lib/award'
 
-const TITLES: Record<string, string> = {
+const titles = (name: string): Record<string, string> => ({
   '/': 'MVP Radar',
-  '/carrera': 'Carrera al MVP · MVP Radar',
-  '/historial': 'Últimos 10 MVP · MVP Radar',
+  '/carrera': `Carrera al ${name} · MVP Radar`,
+  '/historial': `Últimos 10 ${name} · MVP Radar`,
   '/que-premian': 'Qué premian los votantes · MVP Radar',
   '/revision-del-voto': 'Revisión del voto · MVP Radar',
   '/lideres': 'Líderes por departamento · MVP Radar',
   '/metodologia': 'Metodología · MVP Radar',
   '/glosario': 'Glosario · MVP Radar',
-}
+})
 
 function RouteEffects() {
   const { pathname } = useLocation()
+  const { award } = useAward()
   useEffect(() => {
     window.scrollTo(0, 0)
-    document.title = pathname.startsWith('/jugador') ? 'Perfil de jugador · MVP Radar' : TITLES[pathname] || 'MVP Radar'
   }, [pathname])
+  useEffect(() => {
+    document.title = pathname.startsWith('/jugador') ? 'Perfil de jugador · MVP Radar' : titles(AWARDS[award].full)[pathname] || 'MVP Radar'
+  }, [pathname, award])
   return null
 }
 
 function Header() {
   const { mode, toggle } = useTheme()
+  const { award } = useAward()
   return (
     <header className="site-header">
       <div className="wrap">
@@ -42,7 +47,7 @@ function Header() {
           MVP Radar
         </NavLink>
         <nav className="nav" aria-label="Principal">
-          <NavLink to="/carrera">Carrera al MVP</NavLink>
+          <NavLink to="/carrera">{AWARDS[award].race}</NavLink>
           <NavLink to="/historial">Historial</NavLink>
           <NavLink to="/que-premian">Qué premian</NavLink>
           <NavLink to="/revision-del-voto">Revisión del voto</NavLink>
@@ -60,6 +65,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        <AwardProvider>
         <GlossaryProvider>
         <RouteEffects />
         <Header />
@@ -89,6 +95,7 @@ export default function App() {
           </div>
         </footer>
         </GlossaryProvider>
+        </AwardProvider>
       </BrowserRouter>
     </ThemeProvider>
   )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PRESETS, components, rankPool, score } from './scoring'
+import { CY_PRESETS, PRESETS, components, cyComponents, cyScore, rankCyPool, rankPool, score } from './scoring'
 import type { Candidate } from './types'
 
 const base = (over: Partial<Candidate> & Record<string, any>): Candidate =>
@@ -32,5 +32,34 @@ describe('scoring', () => {
   it('pesos en cero no rompen', () => {
     const c = base({})
     expect(score(components(c, 6), { value: 0, production: 0, team: 0, availability: 0, position: 0 })).toBe(0)
+  })
+})
+
+describe('scoring del Cy Young', () => {
+  const pit = (over: Record<string, any> = {}, war = 6): Candidate =>
+    base({
+      role: 'pitcher', hit: undefined, war: { f: war, b: war, avg: war },
+      pit: { era: '2.50', fip: 2.8, ip: 190, so: 220, bb: 50, w: 14, l: 7, savant: { pct: {}, raw: { k_percent: 30, bb_percent: 7 } }, ...over } as any,
+    })
+
+  it('con solo WAR gana el de mas WAR', () => {
+    const r = rankCyPool([pit({}, 5), pit({}, 8)], CY_PRESETS.find((p) => p.id === 'war')!.w)
+    expect(r[0].c.war.avg).toBe(8)
+  })
+  it('con solo prevencion gana la menor efectividad', () => {
+    const a = pit({ era: '1.80', fip: 2.2 })
+    const b = pit({ era: '3.40', fip: 3.6 })
+    const r = rankCyPool([b, a], CY_PRESETS.find((p) => p.id === 'prev')!.w)
+    expect(r[0].c.pit!.era).toBe('1.80')
+  })
+  it('todos los componentes quedan entre 0 y 100', () => {
+    const comp = cyComponents(pit({ w: 25, ip: 300, era: '0.90' }), 6)
+    Object.values(comp).forEach((v) => {
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThanOrEqual(100)
+    })
+  })
+  it('pesos en cero no rompen', () => {
+    expect(cyScore(cyComponents(pit(), 6), { value: 0, prevention: 0, volume: 0, dominance: 0, record: 0 })).toBe(0)
   })
 })

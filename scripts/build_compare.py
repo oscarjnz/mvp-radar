@@ -13,6 +13,7 @@ import urllib.request
 from build_history import (OUT as HISTORY_OUT, RAW_HISTORY, TEAM_MAP, UA, YEARS, get, mlb_id, playoff_teams,
                            row_to_ballot, standings)
 from common import RAW, ROOT, fnum, norm
+from ingest_bbref_awards import CYA_OUT
 
 WEB = os.path.join(ROOT, "web", "public", "data")
 MLB = "https://statsapi.mlb.com/api/v1"
@@ -58,14 +59,10 @@ def enrich(b, year):
     return b
 
 
-def main():
-    raw = json.load(open(RAW_HISTORY, encoding="utf-8"))
-    hist = json.load(open(HISTORY_OUT, encoding="utf-8"))
-    compare = {}
-    card_names = {}  # nombre -> mlbId, de todas las tarjetas
-    all_rows = {}    # (año, liga) -> boleta completa
-
-    for year in YEARS:
+def build_award(raw, years=YEARS):
+    """Ganador y rivales por votacion de un premio. Devuelve (compare, boletas completas por (año, liga))."""
+    compare, all_rows = {}, {}
+    for year in years:
         st = standings(year)
         po = playoff_teams(year)
         for lg in ("AL", "NL"):
@@ -79,14 +76,37 @@ def main():
                     break
                 if b not in rivals:
                     rivals.append(b)
-            entry = {"year": year, "lg": lg, "winner": enrich(dict(win), year), "rivals": [enrich(dict(r), year) for r in rivals],
-                     "betterCount": len(better)}
-            compare[f"{year}-{lg}"] = entry
+            compare[f"{year}-{lg}"] = {"year": year, "lg": lg, "winner": enrich(dict(win), year),
+                                      "rivals": [enrich(dict(r), year) for r in rivals], "betterCount": len(better)}
+    return compare, all_rows
+
+
+def seasons_of(name, all_rows):
+    out = []
+    for (year, lg), ballots in all_rows.items():
+        for r in ballots:
+            if norm(r["name"]) == norm(name):
+                out.append({"year": year, "lg": lg, "rank": r["rank"], "share": r["share"], "first": r["first"], "pts": r["pts"],
+                            "war": r["war"], "team": r["team"], "w": r["w"], "l": r["l"], "playoffs": r["playoffs"], "role": r["role"],
+                            "bat": r["bat"], "pit": r["pit"], "won": r["rank"] == 1})
+    out.sort(key=lambda s: s["year"])
+    return out
+
+
+def main():
+    raw = json.load(open(RAW_HISTORY, encoding="utf-8"))
+    raw_cy = json.load(open(CYA_OUT, encoding="utf-8"))
+    hist = json.load(open(HISTORY_OUT, encoding="utf-8"))
+    hist_cy = json.load(open(os.path.join(WEB, "history_cy.json"), encoding="utf-8"))
+    compare, all_rows = build_award(raw)
+    compare_cy, all_rows_cy = build_award(raw_cy)
+    card_names = {}  # nombre -> mlbId, de todas las tarjetas de ambos premios
+    for cmp_ in (compare, compare_cy):
+        for entry in cmp_.values():
             for p in [entry["winner"]] + entry["rivals"]:
                 if p.get("mlbId"):
                     card_names[p["name"]] = p["mlbId"]
-    # tarjetas de 'debio ganar' y casi
-    for sn in hist["snubs"] + hist.get("nearMisses", []):
+    for sn in hist["snubs"] + hist.get("nearMisses", []) + hist_cy["snubs"] + hist_cy.get("nearMisses", []):
         pid = sn.get("mlbId") or mlb_id(sn["name"])
         if pid:
             card_names[sn["name"]] = pid
@@ -111,14 +131,6 @@ def main():
                     break
             if keep:
                 awards.setdefault(keep, set()).add(str(a.get("season")))
-        seasons = []
-        for (year, lg), ballots in all_rows.items():
-            for r in ballots:
-                if norm(r["name"]) == norm(name):
-                    seasons.append({"year": year, "lg": lg, "rank": r["rank"], "share": r["share"], "first": r["first"], "pts": r["pts"],
-                                    "war": r["war"], "team": r["team"], "w": r["w"], "l": r["l"], "playoffs": r["playoffs"], "role": r["role"],
-                                    "bat": r["bat"], "pit": r["pit"], "won": r["rank"] == 1})
-        seasons.sort(key=lambda s: s["year"])
         ct = b.get("currentTeam") or {}
         profiles[str(pid)] = {
             "id": pid, "name": b.get("fullName"), "number": b.get("primaryNumber"), "birth": b.get("birthDate"), "age": b.get("currentAge"),
@@ -126,15 +138,14 @@ def main():
             "pos": (b.get("primaryPosition") or {}).get("abbreviation"), "bats": (b.get("batSide") or {}).get("code"),
             "throws": (b.get("pitchHand") or {}).get("code"), "debut": b.get("mlbDebutDate"), "teamName": ct.get("name"), "teamId": ct.get("id"),
             "active": b.get("active"),
-            "awards": {k: sorted(v) for k, v in awards.items()}, "seasons": seasons,
+            "awards": {k: sorted(v) for k, v in awards.items()}, "seasons": seasons_of(name, all_rows), "cySeasons": seasons_of(name, all_rows_cy),
             "links": {"mlb": f"https://www.mlb.com/player/{pid}", "savant": f"https://baseballsavant.mlb.com/savant-player/{pid}",
                       "bbref": f"https://www.baseball-reference.com/search/search.fcgi?search={(b.get('fullName') or name).replace(' ', '+')}"},
         }
-    with open(os.path.join(WEB, "compare.json"), "w", encoding="utf-8") as fh:
-        json.dump(compare, fh, ensure_ascii=False, separators=(",", ":"))
-    with open(os.path.join(WEB, "profiles.json"), "w", encoding="utf-8") as fh:
-        json.dump(profiles, fh, ensure_ascii=False, separators=(",", ":"))
-    print("compare", len(compare), "perfiles", len(profiles))
+    for fname, payload in (("compare.json", compare), ("compare_cy.json", compare_cy), ("profiles.json", profiles)):
+        with open(os.path.join(WEB, fname), "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
+    print("compare", len(compare), "compare_cy", len(compare_cy), "perfiles", len(profiles))
     missing = [n for n, p in card_names.items() if str(p) not in profiles]
     print("sin perfil", missing)
 

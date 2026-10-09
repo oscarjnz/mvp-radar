@@ -7,6 +7,7 @@ import { ErrorBox, Loading, Section, Tabs, TeamChip, DataTable } from '../compon
 import PercentileBars, { type PctRow } from '../components/PercentileBars'
 import { EvLaScatter, HitterZoneView, LineChart, MonthBars, MovementPlot, SprayChart, StrikeZoneView } from '../components/charts'
 import { rankVar } from '../components/chartkit'
+import { AWARDS, useAward, type AwardId } from '../lib/award'
 import { P, Li, K, Quote, T } from '../components/Term'
 
 const pct3 = (v: number | undefined) => (v === undefined ? '-' : v.toFixed(3).replace(/^0/, ''))
@@ -190,28 +191,32 @@ function AwardsList({ awards }: { awards: Record<string, string[]> }) {
   )
 }
 
-function VotingHistory({ profile }: { profile: Profile }) {
-  const rows = profile.seasons.map((x: any) => [
+function VotingHistory({ profile, award = 'mvp' }: { profile: Profile; award?: AwardId }) {
+  const list = award === 'cy' ? profile.cySeasons ?? [] : profile.seasons
+  const rows = list.map((x: any) => [
     <Link key={x.year + x.lg} to={`/historial?anio=${x.year}&liga=${x.lg}`}>{x.year}{x.year === 2020 ? ' *' : ''}</Link>,
     x.lg === 'AL' ? 'Americana' : 'Nacional',
     `${x.rank}.º${x.won ? ' (ganó)' : ''}`,
     `${x.share}%`, x.first, x.war,
     x.w === null ? x.team : `${x.team} ${x.w}-${x.l}${x.playoffs ? ' ★' : ''}`,
-    x.pit && x.role === 'pitcher' ? `${x.pit.era} ERA, ${x.pit.so} K en ${x.pit.ip} IP` : x.bat ? `${slash(x.bat.avg)}/${slash(x.bat.obp)}/${slash(x.bat.slg)}, ${x.bat.hr} HR` : '-',
+    x.pit && x.role === 'pitcher' ? `${award === 'cy' ? `${x.pit.w}-${x.pit.l}, ` : ''}${x.pit.era} ERA, ${x.pit.so} K en ${x.pit.ip} IP` : x.bat ? `${slash(x.bat.avg)}/${slash(x.bat.obp)}/${slash(x.bat.slg)}, ${x.bat.hr} HR` : '-',
   ])
   return (
     <>
-      <DataTable head={['Año', 'Liga', 'Puesto', 'Voto', '1.er lugar', 'bWAR', 'Equipo', 'Temporada']} rows={rows} left={[1, 7]} caption="Votaciones al MVP" />
+      <DataTable head={['Año', 'Liga', 'Puesto', 'Voto', '1.er lugar', 'bWAR', 'Equipo', 'Temporada']} rows={rows} left={[1, 7]} caption={`Votaciones al ${AWARDS[award].full}`} />
       <P className="small muted" style={{ marginTop: 8 }}>★ equipo en playoffs. * temporada recortada de 2020, de 60 juegos. Solo aparecen las votaciones de 2016 a 2025 en las que recibió votos.</P>
     </>
   )
 }
 
 function ProfileView({ p }: { p: Profile }) {
+  const { award } = useAward()
+  const cySeasons = p.cySeasons ?? []
   const wins = p.seasons.filter((x: any) => x.won).length
+  const cyWins = cySeasons.filter((x: any) => x.won).length
   return (
     <div className="wrap" style={{ ['--rank-color' as any]: 'var(--accent)' } as CSSProperties}>
-      <P className="small"><Link to="/historial">← Historial de MVP</Link></P>
+      <P className="small"><Link to="/historial">← Historial de {AWARDS[award].full}</Link></P>
       <div className="card">
         <div className="player-head">
           <img className="photo" src={headshot(p.id, 340)} alt={p.name} width={170} />
@@ -227,9 +232,19 @@ function ProfileView({ p }: { p: Profile }) {
               {p.number ? <span className="chip">Número {p.number}</span> : null}
             </div>
             <div className="kv">
-              <div><K>MVP ganados</K><div className="v">{(p.awards['MVP'] || []).length}</div></div>
-              <div><K>Votaciones 2016-2025</K><div className="v">{p.seasons.length}</div></div>
-              <div><K>Votaciones ganadas</K><div className="v">{wins}</div></div>
+              {award === 'cy' ? (
+                <>
+                  <div><K>Cy Young ganados</K><div className="v">{(p.awards['Cy Young'] || []).length}</div></div>
+                  <div><K>Votaciones 2016-2025</K><div className="v">{cySeasons.length}</div></div>
+                  <div><K>Votaciones ganadas</K><div className="v">{cyWins}</div></div>
+                </>
+              ) : (
+                <>
+                  <div><K>MVP ganados</K><div className="v">{(p.awards['MVP'] || []).length}</div></div>
+                  <div><K>Votaciones 2016-2025</K><div className="v">{p.seasons.length}</div></div>
+                  <div><K>Votaciones ganadas</K><div className="v">{wins}</div></div>
+                </>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
               <a className="btn" href={p.links.mlb} target="_blank" rel="noreferrer">Perfil en MLB.com</a>
@@ -239,9 +254,14 @@ function ProfileView({ p }: { p: Profile }) {
           </div>
         </div>
       </div>
-      <Section title="Trayectoria en la votación al MVP" eyebrow="2016 a 2025">
-        <div className="card"><VotingHistory profile={p} /></div>
-      </Section>
+      {(award === 'cy' ? ['cy', 'mvp'] : ['mvp', 'cy']).map((a) => {
+        const list = a === 'cy' ? cySeasons : p.seasons
+        return list.length ? (
+          <Section key={a} title={`Trayectoria en la votación al ${AWARDS[a as AwardId].full}`} eyebrow="2016 a 2025">
+            <div className="card"><VotingHistory profile={p} award={a as AwardId} /></div>
+          </Section>
+        ) : null
+      })}
       {Object.keys(p.awards).length ? (
         <Section title="Premios y reconocimientos" eyebrow="Según MLB.com">
           <div className="card"><AwardsList awards={p.awards} /></div>
@@ -253,22 +273,34 @@ function ProfileView({ p }: { p: Profile }) {
 
 export default function Player() {
   const { id } = useParams()
-  const cands = useCandidates()
+  const { award: chosen } = useAward()
+  const other: AwardId = chosen === 'cy' ? 'mvp' : 'cy'
+  const cands = useCandidates(chosen)
+  const candsOther = useCandidates(other)
   const profiles = useProfiles()
   const detail = usePlayer(id || null)
   const [tab, setTab] = useState<'hit' | 'pit'>('hit')
-  const cand = useMemo(() => {
-    if (!cands.data) return null
-    for (const lg of ['AL', 'NL'] as const) {
-      const all = [...cands.data.leagues[lg].top5, ...cands.data.leagues[lg].bubble]
-      const f = all.find((x) => String(x.id) === id)
-      if (f) return f
+  // Se busca primero en el premio elegido y, si el jugador solo compite por el otro, se usa ese
+  const found = useMemo(() => {
+    const look = (d: typeof cands.data) => {
+      if (!d) return null
+      for (const lg of ['AL', 'NL'] as const) {
+        const f = [...d.leagues[lg].top5, ...d.leagues[lg].bubble].find((x) => String(x.id) === id)
+        if (f) return f
+      }
+      return null
     }
-    return null
-  }, [cands.data, id])
+    const a = look(cands.data)
+    if (a) return { cand: a, award: chosen }
+    const b = look(candsOther.data)
+    return b ? { cand: b, award: other } : null
+  }, [cands.data, candsOther.data, id, chosen, other])
+  const cand = found?.cand ?? null
+  const viewAward: AwardId = found?.award ?? chosen
+  const prize = AWARDS[viewAward].full
 
   if (cands.error) return <div className="wrap"><ErrorBox msg={cands.error} /></div>
-  if (!cands.data || (!cand && !profiles.data && !profiles.error)) return <div className="wrap"><Loading h={400} /></div>
+  if (!cands.data || (!cand && !candsOther.data && !candsOther.error) || (!cand && !profiles.data && !profiles.error)) return <div className="wrap"><Loading h={400} /></div>
   const profile = profiles.data && id ? profiles.data[id] : undefined
   if (!cand) {
     if (profile) return <ProfileView p={profile} />
@@ -282,7 +314,7 @@ export default function Player() {
 
   return (
     <div className="wrap" style={style}>
-      <P className="small"><Link to="/carrera">← Carrera al MVP</Link></P>
+      <P className="small"><Link to={`/carrera?premio=${viewAward}`}>← Carrera al {prize}</Link></P>
       <div className="card">
         <div className="player-head">
           <img className="photo" src={headshot(c.id, 340)} alt={c.name} width={170} />
@@ -304,6 +336,7 @@ export default function Player() {
               {c.hit ? <div><K>wRC+</K><div className="v">{c.hit.wrcPlus}</div></div> : null}
               {c.hit ? <div><K>OPS</K><div className="v">{slash(c.hit.ops)}</div></div> : null}
               {c.pit ? <div><K>ERA</K><div className="v">{c.pit.era}</div></div> : null}
+              {c.pit && viewAward === 'cy' ? <><div><K>FIP</K><div className="v">{c.pit.fip}</div></div><div><K>IP</K><div className="v">{c.pit.ip}</div></div><div><K>K</K><div className="v">{c.pit.so}</div></div><div><K>G-P</K><div className="v">{c.pit.w}-{c.pit.l}</div></div></> : null}
               {c.hit?.wpa !== null && c.hit?.wpa !== undefined ? <div><K>WPA</K><div className="v">{c.hit.wpa}</div></div> : null}
               <div><K>Equipo</K><div className="v">{c.teamRec.w}-{c.teamRec.l}</div></div>
             </div>
@@ -317,7 +350,7 @@ export default function Player() {
         </div>
       </div>
 
-      <Section title="Argumentos a favor y en contra" eyebrow="Su caso al MVP">
+      <Section title="Argumentos a favor y en contra" eyebrow={`Su caso al ${prize}`}>
         <div className="grid g2">
           <div className="card"><h3>A favor</h3><ul className="clean pros">{c.narrative.pros.map((t, i) => <Li key={i}>{t}</Li>)}</ul></div>
           <div className="card"><h3>En contra</h3>{c.narrative.cons.length ? <ul className="clean cons">{c.narrative.cons.map((t, i) => <Li key={i}>{t}</Li>)}</ul> : <P className="muted">No hay objeciones relevantes más allá de su posición en el análisis.</P>}</div>
@@ -326,9 +359,9 @@ export default function Player() {
         {b.awards.length ? <P className="small muted" style={{ marginTop: 12 }}>Reconocimientos previos según MLB.com, {b.awards.join(', ')}.</P> : null}
       </Section>
 
-      {profile && profile.seasons.length ? (
-        <Section title="Trayectoria en la votación al MVP" eyebrow="2016 a 2025">
-          <div className="card"><VotingHistory profile={profile} /></div>
+      {profile && (viewAward === 'cy' ? profile.cySeasons ?? [] : profile.seasons).length ? (
+        <Section title={`Trayectoria en la votación al ${prize}`} eyebrow="2016 a 2025">
+          <div className="card"><VotingHistory profile={profile} award={viewAward} /></div>
         </Section>
       ) : null}
 

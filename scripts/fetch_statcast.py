@@ -1,5 +1,5 @@
 """Descarga datos pitch a pitch de Baseball Savant (statcast_search CSV) de la temporada regular 2026
-para los candidatos del top 5 y los guarda en data/raw/statcast_<id>_<bat|pit>.csv.
+para los candidatos al MVP y al Cy Young y los guarda en data/raw/statcast_<id>_<bat|pit>.csv.
 Uso: python scripts/fetch_statcast.py [--force]
 """
 import json
@@ -8,7 +8,7 @@ import sys
 import time
 import urllib.request
 
-from candidates import BUBBLE, TOP5
+from candidates import all_people
 from common import RAW
 
 FORCE = "--force" in sys.argv
@@ -59,14 +59,13 @@ def fetch(pid, kind):
 
 def main():
     ids = player_ids()
-    for lg in ("AL", "NL"):
-        for name, role in TOP5[lg] + BUBBLE[lg]:
-            if role in ("hitter", "twoway"):
-                pid = ids[(name, "hitter")]
-                fetch(pid, "batter")
-            if role in ("pitcher", "twoway"):
-                pid = ids[(name, "pitcher")]
-                fetch(pid, "pitcher")
+    for _lg, name, role in all_people():
+        if role in ("hitter", "twoway"):
+            pid = ids[(name, "hitter")]
+            fetch(pid, "batter")
+        if role in ("pitcher", "twoway"):
+            pid = ids[(name, "pitcher")]
+            fetch(pid, "pitcher")
 
 
 if __name__ == "__main__":

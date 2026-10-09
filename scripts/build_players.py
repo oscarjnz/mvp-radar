@@ -10,9 +10,10 @@ from collections import defaultdict
 
 import numpy as np
 
-from candidates import BUBBLE, TOP5, all_candidates
+from candidates import CY_POLL, CY_TOP5, all_candidates, all_cy_candidates
 from common import RAW, ROOT, fnum, load_standings, load_teams
 from narratives import narrative_for
+from narratives_cy import cy_narrative, league_context
 
 WEB = os.path.join(ROOT, "web", "public", "data")
 HOME_X, HOME_Y = 125.42, 199.02  # origen de home plate en coordenadas hc_x/hc_y de Statcast
@@ -363,8 +364,9 @@ def main():
                 index[(row["name"], "hitter" if kind == "hitters" else "pitcher")] = row
 
     os.makedirs(os.path.join(WEB, "players"), exist_ok=True)
-    result = {"AL": {"top5": [], "bubble": []}, "NL": {"top5": [], "bubble": []}}
-    for lg, rank, name, role, is_top in all_candidates():
+    written = set()
+
+    def build_one(lg, rank, name, role, is_top, award):
         roles = ["hitter", "pitcher"] if role == "twoway" else [role]
         base = index[(name, roles[0])]
         pid = base["id"]
@@ -394,10 +396,10 @@ def main():
             "bbref": f"https://www.baseball-reference.com/search/search.fcgi?search={name.replace(' ', '+')}",
             "fangraphs": f"https://www.fangraphs.com/search?q={name.replace(' ', '+')}",
         }
-        summary["narrative"] = narrative_for(summary)
-        result[lg]["top5" if is_top else "bubble"].append(summary)
-
-        if True:
+        if award == "MVP":
+            summary["narrative"] = narrative_for(summary)
+        if pid not in written:
+            written.add(pid)
             detail = {"id": pid}
             if "hitter" in roles:
                 detail["hitting"] = hitter_detail(read_csv(os.path.join(RAW, f"statcast_{pid}_bat.csv")), profile)
@@ -405,6 +407,22 @@ def main():
                 detail["pitching"] = pitcher_detail(read_csv(os.path.join(RAW, f"statcast_{pid}_pit.csv")), profile)
             with open(os.path.join(WEB, "players", f"{pid}.json"), "w", encoding="utf-8") as fh:
                 json.dump(detail, fh, ensure_ascii=False, separators=(",", ":"))
+        return summary
+
+    result = {"AL": {"top5": [], "bubble": []}, "NL": {"top5": [], "bubble": []}}
+    for lg, rank, name, role, is_top in all_candidates():
+        result[lg]["top5" if is_top else "bubble"].append(build_one(lg, rank, name, role, is_top, "MVP"))
+
+    # Cy Young: mismos jugadores (el JSON de detalle se comparte por id), narrativa propia generada de los datos
+    result_cy = {"AL": {"top5": [], "bubble": []}, "NL": {"top5": [], "bubble": []}}
+    for lg, rank, name, role, is_top in all_cy_candidates():
+        result_cy[lg]["top5" if is_top else "bubble"].append(build_one(lg, rank, name, role, is_top, "CYA"))
+    for lg in ("AL", "NL"):
+        fifth = result_cy[lg]["top5"][4]["war"]
+        first = result_cy[lg]["top5"][0]
+        for grp in ("top5", "bubble"):
+            for cand in result_cy[lg][grp]:
+                cand["narrative"] = cy_narrative(cand, league_context(pool, lg, cand["name"]), fifth, first)
 
     # metadatos de ligas y standings
     stand = load_standings(teams)
@@ -415,7 +433,13 @@ def main():
     }
     with open(os.path.join(WEB, "candidates.json"), "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
-    print("ok candidates.json", os.path.getsize(os.path.join(WEB, "candidates.json")) // 1024, "KB")
+    payload_cy = {**payload, "leagues": result_cy, "award": "CYA",
+                  "poll": {"outlet": "MLB.com", "voters": 32, "scale": "5-4-3-2-1", "note": "Última encuesta, a dos semanas del cierre de la temporada regular",
+                           "panel": {lg: [{"name": nm, "pos": CY_POLL[nm][0], "points": CY_POLL[nm][1], "first": CY_POLL[nm][2]}
+                                          for nm in sorted(CY_TOP5[lg], key=lambda n: CY_POLL[n][0])] for lg in ("AL", "NL")}}}
+    with open(os.path.join(WEB, "candidates_cy.json"), "w", encoding="utf-8") as fh:
+        json.dump(payload_cy, fh, ensure_ascii=False, separators=(",", ":"))
+    print("ok candidates.json", os.path.getsize(os.path.join(WEB, "candidates.json")) // 1024, "KB", "candidates_cy.json", os.path.getsize(os.path.join(WEB, "candidates_cy.json")) // 1024, "KB")
     for f in sorted(os.listdir(os.path.join(WEB, "players"))):
         print(" ", f, os.path.getsize(os.path.join(WEB, "players", f)) // 1024, "KB")
 
