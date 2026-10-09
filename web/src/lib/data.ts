@@ -17,22 +17,24 @@ function load<T>(path: string): Promise<T> {
   return cache.get(path) as Promise<T>
 }
 
+/**
+ * Carga un JSON. Los datos se guardan junto con la ruta que los produjo y solo se devuelven si coincide
+ * con la ruta actual. Así, al cambiar de premio, nunca se dibuja una página con datos del otro premio.
+ */
 export function useAsync<T>(path: string | null) {
-  const [data, setData] = useState<T | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [state, setState] = useState<{ path: string | null; data: T | null; error: string | null }>({ path: null, data: null, error: null })
   useEffect(() => {
     if (!path) return
     let alive = true
-    setData(null)
-    setError(null)
     load<T>(path)
-      .then((d) => alive && setData(d))
-      .catch((e) => alive && setError(String(e.message || e)))
+      .then((d) => alive && setState({ path, data: d, error: null }))
+      .catch((e) => alive && setState({ path, data: null, error: String(e.message || e) }))
     return () => {
       alive = false
     }
   }, [path])
-  return { data, error }
+  const current = state.path === path
+  return { data: current ? state.data : null, error: current ? state.error : null }
 }
 
 /** Los datos de cada premio viven en archivos paralelos (candidates.json y candidates_cy.json, etc.). Sin argumento se usa el premio elegido. */

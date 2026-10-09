@@ -12,6 +12,7 @@ import Glossary from './pages/Glossary'
 import Leaders from './pages/Leaders'
 import { GlossaryProvider } from './components/Term'
 import { AWARDS, AwardProvider, useAward } from './lib/award'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const titles = (name: string): Record<string, string> => ({
   '/': 'MVP Radar',
@@ -61,6 +62,28 @@ function Header() {
   )
 }
 
+function Pages() {
+  const { pathname } = useLocation()
+  const { award } = useAward()
+  return (
+    <ErrorBoundary resetKey={`${pathname}|${award}`}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/carrera" element={<Race />} />
+        <Route path="/jugador/:id" element={<Player />} />
+        <Route path="/historial" element={<History />} />
+        <Route path="/que-premian" element={<Voters />} />
+        <Route path="/revision-del-voto" element={<Snubs />} />
+        <Route path="/injusticias" element={<Navigate to="/revision-del-voto" replace />} />
+        <Route path="/lideres" element={<Leaders />} />
+        <Route path="/metodologia" element={<Method />} />
+        <Route path="/glosario" element={<Glossary />} />
+        <Route path="*" element={<div className="wrap"><h1>Página no encontrada</h1><p><NavLink to="/">Volver al inicio</NavLink></p></div>} />
+      </Routes>
+    </ErrorBoundary>
+  )
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -70,19 +93,7 @@ export default function App() {
         <RouteEffects />
         <Header />
         <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/carrera" element={<Race />} />
-            <Route path="/jugador/:id" element={<Player />} />
-            <Route path="/historial" element={<History />} />
-            <Route path="/que-premian" element={<Voters />} />
-            <Route path="/revision-del-voto" element={<Snubs />} />
-            <Route path="/injusticias" element={<Navigate to="/revision-del-voto" replace />} />
-            <Route path="/lideres" element={<Leaders />} />
-            <Route path="/metodologia" element={<Method />} />
-            <Route path="/glosario" element={<Glossary />} />
-            <Route path="*" element={<div className="wrap"><h1>Página no encontrada</h1><p><NavLink to="/">Volver al inicio</NavLink></p></div>} />
-          </Routes>
+          <Pages />
         </main>
         <footer className="footer">
           <div className="wrap">

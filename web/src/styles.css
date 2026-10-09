@@ -136,7 +136,7 @@ main { padding: 28px 0 64px; min-height: 70vh; }
 
 /* player cards */
 .pcard { display: grid; grid-template-columns: 84px 1fr; gap: 14px; align-items: center; color: inherit; }
-.photo { aspect-ratio: 4 / 5; height: auto; object-fit: cover; object-position: 50% 0; }
+.photo { aspect-ratio: 1 / 1; height: auto; object-fit: cover; object-position: 50% 18%; }
 .pcard:hover { text-decoration: none; }
 .pcard .photo { width: 84px; border-radius: 14px; background: var(--surface-2); border: 3px solid var(--rank-color, var(--accent)); }
 .rank-badge { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--rank-color, var(--accent)); color: #fff; font-weight: 800; font-size: 0.8rem; }
